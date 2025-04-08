@@ -1,5 +1,7 @@
 import requests
 import re
+from collections import defaultdict
+from typing import List, Dict, Any, Optional, Callable
 
 def get_attacken_gen8_structured(pokemon_name, max_level=None):
     url = f"https://www.pokewiki.de/index.php?title={pokemon_name}/Attacken&action=edit"
@@ -49,24 +51,61 @@ def get_attacken_gen8_structured(pokemon_name, max_level=None):
 
     return attacken_liste
 
+def gruppiere_attacken(
+        attacken: List[Dict[str, Any]],
+        schluessel: str,
+        filter_funktion: Optional[Callable[[Dict[str, Any]], bool]] = None
+        ) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Gruppiert Attacken nach dem angegebenen Schlüssel (z.B. 'Art', 'Typ', 'Kategorie').
+
+    :param attacken: Liste der Attacken (strukturierte Dicts)
+    :param schluessel: Nach welchem Feld gruppiert werden soll
+    :param filter_funktion: Optional: Funktion, die eine Attacke filtert (z.B. nur physisch, nur Wasser etc.)
+    :return: Dictionary: {Gruppenwert: [Attacken]}
+    """
+    gruppiert = defaultdict(list)
+
+    for atk in attacken:
+        if filter_funktion and not filter_funktion(atk):
+            continue
+        key = atk.get(schluessel, "Unbekannt")
+        gruppiert[key].append(atk)
+
+    return dict(gruppiert)
+
+def formatierte_attacken_ausgabe(
+        attacken: List[Dict[str, Any]],
+        felder: List[str]
+        ) -> None:
+    """
+    Gibt die Attacken mit nur den gewünschten Feldern formatiert aus.
+
+    :param attacken: Liste von Attacken (Dicts)
+    :param felder: Liste von Feldnamen, die angezeigt werden sollen, z. B. ['Name', 'Typ', 'Stärke']
+    """
+    for atk in attacken:
+        werte = [f"{feld}: {atk.get(feld, '')}" for feld in felder]
+        print(" | ".join(werte))
 
 list_available_pokemon = (
     ("Kamalm", 35),
-    ("Garados", 33),
-    ("Vulnona", 36),
+    #("Garados", 33),
+    #("Vulnona", 36),
 )
+fields_per_move = ['Level', 'Name', 'Typ', 'Stärke', 'Genauigkeit', 'AP']
 
 for pokemon_name, max_level in list_available_pokemon:
-    print(f"\n\n\n========== {pokemon_name} ==========")
+    print(f"\n\n\n==================== {pokemon_name} ====================")
 
     attacken = get_attacken_gen8_structured(pokemon_name, max_level)
 
-    # Beispiel: Gruppiert nach Art
-    attacken_nach_art = {}
-    for atk in attacken:
-        attacken_nach_art.setdefault(atk['Art'], []).append(atk)
+    # Beispiel mit Filter: Nur physische Attacken, gruppiert nach Typ
+    filter_funktion = lambda atk: atk['Kategorie'] == 'Physisch'
+    group_key = "Typ"
+    gruppen = gruppiere_attacken(attacken, schluessel=group_key, filter_funktion=filter_funktion)
 
-    for art, liste in attacken_nach_art.items():
-        print(f"\n== {art} ==")
-        for atk in liste:
-            print(atk)
+    for key, liste in gruppen.items():
+        print(f"\n== {key} ==")
+        formatierte_attacken_ausgabe(liste, fields_per_move)
+
