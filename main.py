@@ -30,7 +30,7 @@ list_available_pokemon = (
 
 fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
 global_level_cap = 55
-nutze_individuellen_level = False  # <== hier schalten!
+nutze_individuellen_level = False
 grouping_key = "Art"
 def filter_funktion(atk):
     # Beispiel: Suche nach Stahl-Attacken, die keine Status-Attacken sind
@@ -44,10 +44,13 @@ backup_typen = ["Fee"]
 def get_pokemon_typen(pokemon_name: str) -> List[str]:
     """
     Holt die Typen eines Pokémon von seiner Pokewiki-Seite (Bearbeiten-Ansicht),
-    wobei Galar-Formen priorisiert werden.
-    Gibt eine Liste der Typen (Strings) zurück, z.B. ['Unlicht', 'Normal'] für Galar-Zigzachs.
+    indem explizit nach Typ, Typ2, Typ_a, Typ2_a und TypZusatz_a gesucht wird.
+    Priorisiert die _a-Typen, wenn TypZusatz_a=(Galar) ist.
+    Gibt eine Liste der Typen (Strings) zurück.
     Gibt eine leere Liste zurück, wenn Typen nicht gefunden werden oder ein Fehler auftritt.
     """
+    # Debug-Ausgaben entfernt
+
     url = f"https://www.pokewiki.de/index.php?title={pokemon_name}&action=edit"
     try:
         response = requests.get(url)
@@ -56,100 +59,82 @@ def get_pokemon_typen(pokemon_name: str) -> List[str]:
         # Text extrahieren
         match = re.search(r'<textarea[^>]+id="wpTextbox1"[^>]*>(.*?)</textarea>', response.text, re.DOTALL)
         if not match:
-            print(f"⚠️ Textarea für {pokemon_name} nicht gefunden.")
+            # Debug-Ausgabe entfernt
             return []
 
         raw_text = match.group(1)
+        raw_text = raw_text[:1000]
 
-        # --- Datenstrukturen ---
-        # suffix -> region_name (z.B. 'a' -> 'Galar', 'b' -> 'Alola')
-        # Suffix wird kleingeschrieben gespeichert
-        region_map: Dict[str, str] = {}
-        # suffix -> [Typ1, Typ2] (z.B. '' -> ['Feuer', None], 'a' -> ['Unlicht', 'Normal'])
-        # Suffix wird kleingeschrieben gespeichert, Typen können None sein
-        type_map: Dict[str, List[Optional[str]]] = defaultdict(lambda: [None, None])
+        # --- Hilfsfunktion zum Suchen und Bereinigen eines Wertes ---
+        def find_value(pattern: str, extract_group: int = 1) -> Optional[str]:
+            """Sucht nach dem Pattern und gibt den Wert der Gruppe zurück oder None."""
+            match = re.search(pattern, raw_text, re.IGNORECASE)
+            if match:
+                try:
+                    value = match.group(extract_group).strip().replace("[[", "").replace("]]", "")
+                    # Gebe None zurück, wenn der Wert nach Bereinigung leer ist
+                    return value if value else None
+                except IndexError:
+                    # Debug-Ausgabe entfernt
+                    return None # Gruppe nicht gefunden
+            return None
 
-        # --- Schritt 1: Regionale Marker extrahieren ---
-        # Sucht nach: |TypZusatzSUFFIX = (REGION)
-        zusatz_matches = re.findall(r'\|\s*TypZusatz(\w*)\s*=\s*\(([^)]+)\)', raw_text, re.IGNORECASE)
-        for suffix, region in zusatz_matches:
-            region_map[suffix.lower()] = region.strip()
+        # --- Extrahiere explizit die benötigten Werte ---
+        # Verwendung der vereinfachten Regex ohne \s*
+        typ_base = find_value(r'\|Typ=([^\|\n}]+)')
+        typ2_base = find_value(r'\|Typ2=([^\|\n}]+)')
+        typ_a = find_value(r'\|Typ_a=([^\|\n}]+)')
+        typ2_a = find_value(r'\|Typ2_a=([^\|\n}]+)')
+        # Für Zusatz_a, extrahiere den Inhalt *innerhalb* der Klammern
+        zusatz_a_content = find_value(r'\|Typ2Zusatz_a=\(([^)]+)\)') # Beibehaltung von Typ2Zusatz_a
 
-        # --- Schritt 2: Alle Typ-Definitionen extrahieren ---
-        # Sucht nach: |Typ[2][SUFFIX] = WERT
-        type_matches = re.findall(r'\|\s*Typ(2?)(\w*)\s*=\s*([^\|\n}]+)', raw_text, re.IGNORECASE)
-        for is_typ2, suffix, value in type_matches:
-            suffix_lower = suffix.lower()
-            cleaned_value = value.strip().replace("[[", "").replace("]]", "")
-            if not cleaned_value:  # Überspringe leere Werte
-                continue
+        # Debug-Ausgaben entfernt
 
-            type_index = 1 if is_typ2 else 0  # 0 für Typ1, 1 für Typ2
-            # Überschreibe den Wert, falls er mehrfach definiert ist (letzter gewinnt)
-            type_map[suffix_lower][type_index] = cleaned_value
-
-        # --- Schritt 3: Korrekte Typen bestimmen (Galar priorisieren) ---
-        galar_suffix = None
-        for suffix, region in region_map.items():
-            # Suche nach dem Suffix, der explizit als 'Galar' markiert ist
-            if region.lower() == 'galar':
-                galar_suffix = suffix
-                break  # Nimm den ersten gefundenen Galar-Suffix
-
+        # --- Logik: Entscheide, welche Typen verwendet werden ---
         final_types_list: List[str] = []
-        used_source = "unbekannt" # Zur Nachverfolgung
+        used_source = "unbekannt" # Behalten für interne Logik-Nachvollziehbarkeit falls Warnung nötig
 
-        if galar_suffix is not None and galar_suffix in type_map:
-            # Galar-Form gefunden und Typen dafür definiert?
-            potential_types = type_map[galar_suffix]
-            # Füge nur Typen hinzu, die nicht None sind
-            final_types_list = [t for t in potential_types if t]
-            if final_types_list: # Nur wenn tatsächlich Typen gefunden wurden
-                used_source = f"Galar (Suffix: '{galar_suffix}')"
+        # Prüfe, ob die a-Form explizit als Galar markiert ist
+        is_galar_a_form = zusatz_a_content is not None and zusatz_a_content.lower() == 'galar'
 
+        if is_galar_a_form:
+            # Debug-Ausgabe entfernt
+            used_source = "Form 'a' (detected as Galar)"
+            # Nimm Typ_a als ersten Typ, wenn er existiert
+            if typ_a:
+                final_types_list.append(typ_a)
+                # Nimm Typ2_a als zweiten Typ, wenn er existiert (und nicht leer ist)
+                if typ2_a:
+                    final_types_list.append(typ2_a)
+                # Debug-Ausgabe entfernt
+            # Debug-Ausgabe entfernt
+        else:
+            # Fallback: Nutze die Basis-Typen (Typ, Typ2)
+            # Debug-Ausgaben entfernt
+            used_source = "Basis (Typ/Typ2)"
+            # Nimm Typ als ersten Typ, wenn er existiert
+            if typ_base:
+                final_types_list.append(typ_base)
+                # Nimm Typ2 als zweiten Typ, wenn er existiert (und nicht leer ist)
+                if typ2_base:
+                    final_types_list.append(typ2_base)
+                # Debug-Ausgabe entfernt
+            # Debug-Ausgabe entfernt
 
-        if not final_types_list:
-            # Keine Galar-Typen gefunden oder definiert, nutze Basis-Form (Suffix '')
-            if '' in type_map:
-                potential_types = type_map['']
-                final_types_list = [t for t in potential_types if t]
-                if final_types_list:
-                    used_source = "Basis ('')"
+        # Finale Debug-Ausgaben entfernt
 
-
-            # Zusätzlicher Fallback, falls Basisform mit |Typ1= / |Typ2= definiert wurde (selten)
-            # Dieser Fall sollte durch das Hauptregex `Typ(2?)(\w*)` bereits abgedeckt sein,
-            # da es `Typ1` als `Typ` mit suffix `1` sehen würde. Aber zur Sicherheit:
-            if not final_types_list:
-                typ1_val = type_map.get('1', [None, None])[0]
-                typ2_val = type_map.get('2', [None, None])[0] # Beachte: Typ2 wird oft ohne Suffix '2' gefunden
-                temp_list = []
-                if typ1_val: temp_list.append(typ1_val)
-                # Suche korrekten Typ2 für Typ1 als Basis
-                typ2_fallback_val = type_map.get('', [None, None])[1] # Standard Typ2
-                if typ2_fallback_val:
-                    if typ2_fallback_val not in temp_list: # Verhindere Duplikat wenn Typ1=Typ, Typ2=Typ2
-                        temp_list.append(typ2_fallback_val)
-                elif typ2_val and typ2_val not in temp_list: # Fallback auf Typ2=
-                    temp_list.append(typ2_val)
-
-                if temp_list:
-                    final_types_list = temp_list
-                    used_source = "Basis (Fallback 'Typ1'/'Typ2')"
-
-
-        # Debug-Ausgabe (kann entfernt werden)
-        # print(f"ℹ️ Typen für {pokemon_name} extrahiert aus Quelle '{used_source}': {final_types_list}")
-
-        if not final_types_list:
-            print(f"⚠️ Typen für {pokemon_name} konnten nicht final extrahiert werden (weder Galar noch Basis).")
+        if not final_types_list and used_source == "unbekannt":
+            # Diese Warnung kann hilfreich sein, falls gar nichts gefunden wurde
+            print(f"⚠️ Typen für {pokemon_name} konnten nicht extrahiert werden (keine passenden Felder gefunden).")
 
         return final_types_list
 
     except requests.exceptions.RequestException as e:
+        # Fehler ausgeben ist sinnvoll
         print(f"Fehler beim Abrufen der Seite für {pokemon_name}: {e}")
         return []
     except Exception as e:
+        # Fehler ausgeben ist sinnvoll
         print(f"Ein unerwarteter Fehler ist beim Holen der Typen für {pokemon_name} aufgetreten: {e}")
         return []
 
@@ -525,7 +510,7 @@ else:
         gruppen = gruppiere_attacken(p_data['attacken'], schluessel=grouping_key, filter_funktion=aktive_filter_funktion)
         if not any(gruppen.values()):
             nicht_erfuellt.append(p_data['name'])
-    print(f"❌ Folgende EIGENE Pokémon haben KEINE passende Attacke gemäß dem aktiven Filter gefunden: {', '.join(nicht_erfuellt)}")
+    print(f"❌ Folgende EIGENE Pokémon haben KEINEN passenden Move gemäß dem aktiven Filter gefunden: {', '.join(nicht_erfuellt)}")
 
 
 if gegner_team_liste:
