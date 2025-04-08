@@ -2,6 +2,7 @@ import requests
 import re
 from collections import defaultdict
 from typing import List, Dict, Any, Optional, Callable
+from bs4 import BeautifulSoup
 
 # --------------- GLOBAL VARS ---------------
 
@@ -50,31 +51,42 @@ def get_team_from_trainer(trainer_name: str) -> Optional[List[str]]:
         print(f"⚠️ Trainerseite nicht gefunden: {url}")
         return None
 
-    html = response.text
+    soup = BeautifulSoup(response.content, "html.parser")
 
-    # Abschnitt für Arenakampf suchen
-    arenakampf_match = re.search(r'==\s*Arenakampf\s*==.*?(<table.*?</table>)', html, re.DOTALL)
-    if not arenakampf_match:
-        print(f"⚠️ Kein Arenakampf-Abschnitt gefunden für {trainer_name}")
-        return None
+    list_available_pokemon = []
 
-    table_html = arenakampf_match.group(1)
+    # Teams suchen
+    teams = soup.find_all("div", class_="team")
+    for team in teams:
+        # Schritt 1: sicherstellen, dass das richtige Spiel (SW/SH) gemeint ist
+        game_tags = team.find_all("span", class_="sk_item")
+        if not game_tags:
+            continue
+        contains_only_sw = False
+        for tag in game_tags:
+            if "EX" in tag.text:
+                continue
+            if "SW" == tag.text.strip():
+                contains_only_sw = True
+        if not contains_only_sw:
+            continue
 
-    # Pokémon-Namen extrahieren
-    # Matcht Links auf Pokémon-Artikel in Tabellenzellen, z. B. <a href="/Kamalm">Kamalm</a>
-    poke_matches = re.findall(r'href="/([^"]+)"[^>]*>([^<]+)</a>', table_html)
+        # Pokémon-Daten extrahieren
+        pokes = team.find_all("div", class_="clicktoggle", attrs={"data-type": "set"}) + team.find_all("div", class_="clicktoggle clicktoggle-active", attrs={"data-type": "set"})
 
-    team = []
-    for link, name in poke_matches:
-        # Nur echte Pokémon-Namen (nicht Items o.ä.)
-        if name and name[0].isupper() and not name.startswith("Form"):
-            team.append(name.strip())
+        for poke_div in pokes:
+            # Basisdaten: Pokémonname, Geschlecht, Level
+            text = poke_div.get_text(separator=" ", strip=True)
+            name = text.split("♀")[0].split("♂")[0].split()[0].strip()  # Nur das erste Wort
+            level = text.split("Lv.")[1].strip() if "Lv." in text else "?"
 
-    if not team:
-        return None
+            # In die Liste einfügen
+            list_available_pokemon.append((name, int(level) if level.isdigit() else level))
 
-    # Doppelte entfernen + nur relevante Namen
-    return list(dict.fromkeys(team))
+    # Duplikate entfernen und nur relevante Pokémon-Namen behalten
+    list_available_pokemon = list(dict.fromkeys(list_available_pokemon))
+
+    return list_available_pokemon
 
 def get_attacken_gen8_structured(pokemon_name, max_level=None):
     url = f"https://www.pokewiki.de/index.php?title={pokemon_name}/Attacken&action=edit"
@@ -85,7 +97,7 @@ def get_attacken_gen8_structured(pokemon_name, max_level=None):
     # Text extrahieren
     match = re.search(r'<textarea[^>]+id="wpTextbox1"[^>]*>(.*?)</textarea>', response.text, re.DOTALL)
     if not match:
-        raise Exception("Textarea nicht gefunden.")
+        raise Exception(f"Textarea nicht gefunden.\n{response.text}")
 
     raw_text = match.group(1).replace('&amp;nbsp;', ' ').replace('&nbsp;', ' ')
 
@@ -143,7 +155,7 @@ def gruppiere_attacken(
         attacken: List[Dict[str, Any]],
         schluessel: str,
         filter_funktion: Optional[Callable[[Dict[str, Any]], bool]] = None
-        ) -> Dict[str, List[Dict[str, Any]]]:
+) -> Dict[str, List[Dict[str, Any]]]:
     """
     Gruppiert Attacken nach dem angegebenen Schlüssel (z.B. 'Art', 'Typ', 'Kategorie').
 
@@ -165,7 +177,7 @@ def gruppiere_attacken(
 def formatierte_attacken_ausgabe(
         attacken: List[Dict[str, Any]],
         felder: List[str]
-        ) -> None:
+) -> None:
     """
     Gibt die Attacken mit nur den gewünschten Feldern formatiert aus.
 
@@ -194,7 +206,7 @@ for pokemon_name, max_level_individuell in list_available_pokemon:
         alle_erfuellen_kriterium = False
 
     if not hat_passenden_move:
-        print(">> ⚠️ Kein passender Stahl-Angriff gefunden!")
+        print(">> ⚠️ Kein passender Move nach den Filtern gefunden!")
     else:
         for art, liste in gruppen.items():
             print(f"\n== {art} ==")
@@ -217,6 +229,3 @@ else:
     print(f"⚠️ Kein Team gefunden – verwende Typ-Backup: {backup_typen}")
     # Filterfunktion wird hier automatisch auf Typen angepasst
     filter_funktion = lambda atk: atk['Typ'] in backup_typen and atk['Kategorie'] != 'Status'
-
-
-
