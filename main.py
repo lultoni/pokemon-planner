@@ -88,24 +88,67 @@ def formatierte_attacken_ausgabe(
         werte = [f"{feld}: {atk.get(feld, '')}" for feld in felder]
         print(" | ".join(werte))
 
+# --------------- GLOBAL VARS ---------------
+
 list_available_pokemon = (
-    ("Kamalm", 35),
-    #("Garados", 33),
-    #("Vulnona", 36),
+    ("Vulnona", 39),
+    ("Shnebedeck", 28),
+    ("Flunschlik", 29),
+    ("Golbit", 33),
+    ("Golbit", 33),
+    ("Strepoli", 34),
+    ("Pionskora", 34),
+    ("Kamalm", 32),
+    ("Phlegleon", 31),
+    ("Psiaugon", 32),
+    ("Smogon", 30),
+    ("Schalellos", 30),
+    ("Pelzebub", 38),
+    ("Maritellit", 36),
+    ("Barrakiefa", 30),
+    ("Garados", 35),
+    ("Zurrokex", 32),
+    ("Salanga", 29),
+    ("Schlaraffel", 24),
 )
-fields_per_move = ['Level', 'Name', 'Typ', 'Stärke', 'Genauigkeit', 'AP']
 
-for pokemon_name, max_level in list_available_pokemon:
-    print(f"\n\n\n==================== {pokemon_name} ====================")
+fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
+global_level_cap = 55
+nutze_individuellen_level = False  # <== hier schalten!
+grouping_key = "Art"
+def filter_funktion(atk):
+    return atk['Typ'] == 'Stahl' and atk['Kategorie'] != 'Status'
 
-    attacken = get_attacken_gen8_structured(pokemon_name, max_level)
+# --------------- GLOBAL VARS ---------------
 
-    # Beispiel mit Filter: Nur physische Attacken, gruppiert nach Typ
-    filter_funktion = lambda atk: atk['Kategorie'] == 'Physisch'
-    group_key = "Typ"
-    gruppen = gruppiere_attacken(attacken, schluessel=group_key, filter_funktion=filter_funktion)
 
-    for key, liste in gruppen.items():
-        print(f"\n== {key} ==")
-        formatierte_attacken_ausgabe(liste, fields_per_move)
+alle_erfuellen_kriterium = True  # wird auf False gesetzt, wenn ein Pokémon keinen passenden Move hat
+
+for pokemon_name, max_level_individuell in list_available_pokemon:
+    level_cap = max_level_individuell if nutze_individuellen_level else global_level_cap
+
+    print(f"\n\n\n==================== {pokemon_name} (bis Level {level_cap}) ====================")
+
+    attacken = get_attacken_gen8_structured(pokemon_name, level_cap)
+
+    gruppen = gruppiere_attacken(attacken, schluessel=grouping_key, filter_funktion=filter_funktion)
+
+    hat_passenden_move = any(gruppen.values())  # mind. 1 Attacke vorhanden?
+    if not hat_passenden_move:
+        alle_erfuellen_kriterium = False
+
+    if not hat_passenden_move:
+        print(">> ⚠️ Kein passender Stahl-Angriff gefunden!")
+    else:
+        for art, liste in gruppen.items():
+            print(f"\n== {art} ==")
+            formatierte_attacken_ausgabe(liste, fields_per_move)
+
+# Zusammenfassung
+print("\n\n==============================================")
+if alle_erfuellen_kriterium:
+    print("✅ Alle Pokémon haben mindestens eine Stahl-Attacke (kein Status)!")
+else:
+    print("❌ Mindestens ein Pokémon hat KEINE passende Stahl-Attacke.")
+
 
