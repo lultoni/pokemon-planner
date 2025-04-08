@@ -3,6 +3,79 @@ import re
 from collections import defaultdict
 from typing import List, Dict, Any, Optional, Callable
 
+# --------------- GLOBAL VARS ---------------
+
+list_available_pokemon = (
+    ("Vulnona", 39),
+    ("Shnebedeck", 28),
+    ("Flunschlik", 29),
+    ("Golbit", 33),
+    ("Golbit", 33),
+    ("Strepoli", 34),
+    ("Pionskora", 34),
+    ("Kamalm", 32),
+    ("Phlegleon", 31),
+    ("Psiaugon", 32),
+    ("Smogon", 30),
+    ("Schalellos", 30),
+    ("Pelzebub", 38),
+    ("Maritellit", 36),
+    ("Barrakiefa", 30),
+    ("Garados", 35),
+    ("Zurrokex", 32),
+    ("Salanga", 29),
+    ("Schlaraffel", 24),
+)
+
+fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
+global_level_cap = 55
+nutze_individuellen_level = False  # <== hier schalten!
+grouping_key = "Art"
+def filter_funktion(atk):
+    return atk['Typ'] == 'Stahl' and atk['Kategorie'] != 'Status'
+
+trainer_name = "Papella"
+backup_typen = ["Fee"]
+
+# --------------- FUNCTION DEFINITIONS ---------------
+
+def get_team_from_trainer(trainer_name: str) -> Optional[List[str]]:
+    """
+    Holt die Pokémon-Namen aus dem Arenakampf-Abschnitt eines Trainers (z.B. Papella).
+    Wenn nichts gefunden wird, gib None zurück.
+    """
+    url = f"https://www.pokewiki.de/{trainer_name}"
+    response = requests.get(url)
+    if response.status_code != 200:
+        print(f"⚠️ Trainerseite nicht gefunden: {url}")
+        return None
+
+    html = response.text
+
+    # Abschnitt für Arenakampf suchen
+    arenakampf_match = re.search(r'==\s*Arenakampf\s*==.*?(<table.*?</table>)', html, re.DOTALL)
+    if not arenakampf_match:
+        print(f"⚠️ Kein Arenakampf-Abschnitt gefunden für {trainer_name}")
+        return None
+
+    table_html = arenakampf_match.group(1)
+
+    # Pokémon-Namen extrahieren
+    # Matcht Links auf Pokémon-Artikel in Tabellenzellen, z. B. <a href="/Kamalm">Kamalm</a>
+    poke_matches = re.findall(r'href="/([^"]+)"[^>]*>([^<]+)</a>', table_html)
+
+    team = []
+    for link, name in poke_matches:
+        # Nur echte Pokémon-Namen (nicht Items o.ä.)
+        if name and name[0].isupper() and not name.startswith("Form"):
+            team.append(name.strip())
+
+    if not team:
+        return None
+
+    # Doppelte entfernen + nur relevante Namen
+    return list(dict.fromkeys(team))
+
 def get_attacken_gen8_structured(pokemon_name, max_level=None):
     url = f"https://www.pokewiki.de/index.php?title={pokemon_name}/Attacken&action=edit"
     response = requests.get(url)
@@ -49,7 +122,22 @@ def get_attacken_gen8_structured(pokemon_name, max_level=None):
                 'AP': ap.strip()
             })
 
-    return attacken_liste
+    # Duplikate entfernen anhand eines eindeutigen Hash-Schlüssels
+    unique_attacks = {}
+    for atk in attacken_liste:
+        # Wir ignorieren "Art" und "Level" beim Duplikatvergleich
+        key = (
+            atk['Name'],
+            atk['Typ'],
+            atk['Kategorie'],
+            atk['Stärke'],
+            atk['Genauigkeit'],
+            atk['AP']
+        )
+        if key not in unique_attacks:
+            unique_attacks[key] = atk
+
+    return list(unique_attacks.values())
 
 def gruppiere_attacken(
         attacken: List[Dict[str, Any]],
@@ -88,39 +176,7 @@ def formatierte_attacken_ausgabe(
         werte = [f"{feld}: {atk.get(feld, '')}" for feld in felder]
         print(" | ".join(werte))
 
-# --------------- GLOBAL VARS ---------------
-
-list_available_pokemon = (
-    ("Vulnona", 39),
-    ("Shnebedeck", 28),
-    ("Flunschlik", 29),
-    ("Golbit", 33),
-    ("Golbit", 33),
-    ("Strepoli", 34),
-    ("Pionskora", 34),
-    ("Kamalm", 32),
-    ("Phlegleon", 31),
-    ("Psiaugon", 32),
-    ("Smogon", 30),
-    ("Schalellos", 30),
-    ("Pelzebub", 38),
-    ("Maritellit", 36),
-    ("Barrakiefa", 30),
-    ("Garados", 35),
-    ("Zurrokex", 32),
-    ("Salanga", 29),
-    ("Schlaraffel", 24),
-)
-
-fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
-global_level_cap = 55
-nutze_individuellen_level = False  # <== hier schalten!
-grouping_key = "Art"
-def filter_funktion(atk):
-    return atk['Typ'] == 'Stahl' and atk['Kategorie'] != 'Status'
-
-# --------------- GLOBAL VARS ---------------
-
+# --------------- PROGRAMM RUNNING ---------------
 
 alle_erfuellen_kriterium = True  # wird auf False gesetzt, wenn ein Pokémon keinen passenden Move hat
 
@@ -150,5 +206,17 @@ if alle_erfuellen_kriterium:
     print("✅ Alle Pokémon haben mindestens eine Stahl-Attacke (kein Status)!")
 else:
     print("❌ Mindestens ein Pokémon hat KEINE passende Stahl-Attacke.")
+
+# Hole Pokémon-Team des Trainers
+gegner_team = get_team_from_trainer(trainer_name)
+
+if gegner_team:
+    list_available_pokemon = [(name, global_level_cap) for name in gegner_team]
+    print(f"🎯 Gegner-Team von {trainer_name}: {[name for name, _ in list_available_pokemon]}")
+else:
+    print(f"⚠️ Kein Team gefunden – verwende Typ-Backup: {backup_typen}")
+    # Filterfunktion wird hier automatisch auf Typen angepasst
+    filter_funktion = lambda atk: atk['Typ'] in backup_typen and atk['Kategorie'] != 'Status'
+
 
 
