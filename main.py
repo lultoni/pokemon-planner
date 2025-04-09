@@ -422,9 +422,34 @@ def get_effectiveness(type_chart, attack_type, defense_types):
 
     return effectiveness
 
+def determine_optimal_attack_types(type_chart: dict, opponent_team: List[Dict[str, Any]]) -> List[str]:
+    # Hier gehen wir davon aus, dass type_chart ein Dictionary ist, in dem für jeden Angriffstyp die
+    # Effektivitätswerte gegenüber einzelnen Verteidiger-Typen hinterlegt sind.
+    # Erstelle zunächst eine Liste aller Angriffstypen:
+    attack_types = list(type_chart.keys())
+    scores = {}
+    for atk_type in attack_types:
+        total_multiplier = 0
+        count = 0
+        for opp in opponent_team:
+            # Für jedes Gegner-Pokémon holen wir dessen Verteidigungstypen (als Liste)
+            defense_types = opp.get('types', [])
+            # get_effectiveness liefert uns den Multiplikator für den Angriffstyp gegen die Verteidigungstypen
+            eff = get_effectiveness(type_chart, atk_type, defense_types)
+            if eff is None:
+                eff = 1.0  # Standard, falls kein Wert gefunden wird
+            total_multiplier += eff
+            count += 1
+        # Durchschnittlicher Multiplikator für diesen Angriffstyp
+        avg_multiplier = total_multiplier / count if count > 0 else 1.0
+        scores[atk_type] = avg_multiplier
+    # Sortieren – höhere Durchschnittswerte deuten auf höhere Effektivität hin.
+    sorted_types = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    # Wähle die Typen aus, deren durchschnittlicher Multiplikator > 1 liegt (also effektiv)
+    optimal_types = [atype for atype, score in sorted_types if score > 1]
+    return optimal_types
+
 # --------------- PROGRAMM RUNNING ---------------
-
-
 
 # 1. Gegner-Team analysieren
 print(f"--- Analyse GEGNER-Team ({trainer_name}) ---")
@@ -464,6 +489,23 @@ else:
         # Erneute Analyse der eigenen Pokémon mit dem neuen Filter wäre hier sinnvoll, wenn gewünscht.
     else:
         print("Keine Backup-Typen definiert.")
+
+# --- Teamanalyse mit Typ-Effektivität ---
+
+# Annahme: Die Typentabelle wurde zuvor geladen:
+type_chart = load_type_chart("pokemon_type_chart.json")
+# Gegnerische Team-Daten (gegner_team_daten) sind zuvor als Liste von Dictionaries extrahiert worden,
+# wobei jedes Element z. B. so aussieht:
+# { 'name': 'Papella', 'level': 36, 'types': ['Fee', ...], 'attacken': [] }
+optimal_attack_types = determine_optimal_attack_types(type_chart, gegner_team_daten)
+
+if optimal_attack_types:
+    print(f"Optimale Angriffs-Typen gegen {trainer_name}: {optimal_attack_types}")
+    # Setze aktive_filter_funktion: Akzeptiere nur Attacken, die einen der optimalen Typen haben, und keine Status-Attacken
+    aktive_filter_funktion = lambda atk: atk['Typ'] in optimal_attack_types and atk['Kategorie'] != 'Status'
+else:
+    print("Keine optimalen Angriffs-Typen gefunden. Verwende Backup-Typen.")
+    aktive_filter_funktion = lambda atk: atk['Typ'] in backup_typen and atk['Kategorie'] != 'Status'
 
 # 2. Eigene Pokémon-Liste analysieren (falls definiert und nicht überschrieben)
 print("--- Analyse EIGENER Pokémon (aus list_available_pokemon) ---")
