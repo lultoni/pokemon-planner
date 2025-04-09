@@ -4,6 +4,7 @@ import re
 from collections import defaultdict
 from typing import List, Dict, Any, Optional, Callable, Tuple
 from bs4 import BeautifulSoup
+import json
 
 # --------------- GLOBAL VARS ---------------
 
@@ -32,12 +33,12 @@ fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit'
 global_level_cap = 55
 nutze_individuellen_level = False
 grouping_key = "Art"
-def filter_funktion(atk):
-    # Beispiel: Suche nach Stahl-Attacken, die keine Status-Attacken sind
-    return atk['Typ'] == 'Stahl' and atk['Kategorie'] != 'Status'
-
+# filter funktion wird nach der gegnerischen team analyse unten gemacht
 trainer_name = "Papella"
 backup_typen = ["Fee"]
+def filter_funktion_error(atk):
+    # Beispiel: Suche nach Stahl-Attacken, die keine Status-Attacken sind
+    return atk['Typ'] == 'Stahl' and atk['Kategorie'] != 'Status'
 
 # --------------- FUNCTION DEFINITIONS ---------------
 
@@ -333,9 +334,138 @@ def formatierte_attacken_ausgabe(
         werte = [f"{str(atk.get(feld, '')):<{max_breiten[feld]}}" for feld in felder]
         print(" | ".join(werte))
 
+def load_type_chart(filename="pokemon_type_chart.json"):
+    """
+    Lädt die Typen-Effektivitätstabelle aus einer JSON-Datei.
+
+    Args:
+        filename (str): Der Pfad zur JSON-Datei.
+
+    Returns:
+        dict: Das geladene Dictionary mit der Typen-Effektivitätstabelle.
+        None: Wenn die Datei nicht gefunden wurde, kein gültiges JSON enthält
+              oder ein anderer Fehler auftritt.
+    """
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            chart = json.load(f)
+        print(f"Typen-Effektivitätstabelle erfolgreich aus '{filename}' geladen.")
+        return chart
+    except FileNotFoundError:
+        print(f"Fehler: Datei '{filename}' nicht gefunden.")
+        return None
+    except json.JSONDecodeError:
+        print(f"Fehler: Datei '{filename}' enthält kein gültiges JSON.")
+        return None
+    except Exception as e:
+        print(f"Ein unerwarteter Fehler beim Lesen der Datei ist aufgetreten: {e}")
+        return None
+
+def get_effectiveness(type_chart, attack_type, defense_types):
+    """
+    Ermittelt die Effektivität einer Attacke gegen einen oder zwei Verteidiger-Typen.
+
+    Behandelt automatisch die korrekte Schlüsselbildung für Einzel- und Doppeltypen
+    (Doppeltypen werden alphabetisch sortiert für den Lookup).
+
+    Args:
+        type_chart (dict): Die geladene Typen-Effektivitätstabelle.
+        attack_type (str): Der Typ der angreifenden Attacke (z.B. "Feuer").
+        defense_types (list[str]): Eine Liste mit einem oder zwei Verteidiger-Typen
+                                   (z.B. ["Pflanze"] oder ["Pflanze", "Gift"]).
+
+    Returns:
+        float: Der Effektivitätsmultiplikator (z.B. 0.0, 0.5, 1.0, 2.0).
+        None: Wenn die Eingabe ungültig ist (z.B. falsche Anzahl an Typen,
+              ungültiger Angriffstyp) oder die Kombination nicht gefunden wurde.
+              Letzteres sollte bei korrekt generierter JSON nicht passieren.
+    """
+    if not type_chart:
+        print("Fehler: Type Chart wurde nicht korrekt geladen.")
+        return None
+
+    if not isinstance(defense_types, (list, tuple)) or not 1 <= len(defense_types) <= 2:
+        print(f"Fehler: defense_types muss eine Liste/Tuple mit 1 oder 2 Typen sein, erhalten: {defense_types}")
+        return None
+
+    # Hole das Unter-Dictionary für den Angriffstyp (sicher mit .get)
+    attacker_effectiveness_map = type_chart.get(attack_type)
+    if not attacker_effectiveness_map:
+        print(f"Fehler: Angriffstyp '{attack_type}' nicht in der Type Chart gefunden.")
+        return None
+
+    # Baue den Schlüssel für die Abfrage basierend auf der Anzahl der Verteidiger-Typen
+    lookup_key = None
+    if len(defense_types) == 1:
+        # Einzeltyp-Verteidiger: Format "Typ, None"
+        lookup_key = f"{defense_types[0]}, None"
+    elif len(defense_types) == 2:
+        # Doppeltyp-Verteidiger: Sortiere alphabetisch für das Format "TypA, TypB"
+        type1, type2 = defense_types[0], defense_types[1]
+        # Stelle sicher, dass die Typen gültig sind (optional, aber gute Praxis)
+        # if type1 not in type_chart or type2 not in type_chart: # Prüft nur, ob sie als Angreifer existieren
+        #     print(f"Warnung: Einer der Verteidiger-Typen '{type1}'/'{type2}' ist möglicherweise ungültig.")
+
+        sorted_types = sorted((type1, type2))
+        lookup_key = f"{sorted_types[0]}, {sorted_types[1]}"
+
+    # Mache den Lookup im Dictionary des Angreifers
+    effectiveness = attacker_effectiveness_map.get(lookup_key)
+
+    if effectiveness is None:
+        # Dieser Fall sollte eigentlich nicht auftreten, wenn die JSON korrekt ist
+        # und die Typnamen übereinstimmen. Wir geben trotzdem eine Meldung aus.
+        print(f"Warnung: Schlüssel '{lookup_key}' für Angreifer '{attack_type}' nicht gefunden.")
+        # Hier *könnte* man einen Fallback einbauen, aber bei korrekter JSON ist er unnötig.
+        # Die Logik oben stellt sicher, dass immer der korrekte, sortierte Schlüssel verwendet wird.
+        return None # Oder vielleicht 1.0 als Standard zurückgeben? None ist klarer bei Fehlern.
+
+    return effectiveness
+
 # --------------- PROGRAMM RUNNING ---------------
 
-# 1. Eigene Pokémon-Liste analysieren (falls definiert und nicht überschrieben)
+
+
+# 1. Gegner-Team analysieren
+print(f"--- Analyse GEGNER-Team ({trainer_name}) ---")
+gegner_team_daten = []
+aktive_filter_funktion = filter_funktion_error # Behalte die ursprüngliche Funktion
+
+# Hole Pokémon-Team des Trainers
+gegner_team_liste = get_team_from_trainer(trainer_name)
+
+if gegner_team_liste:
+    print(f"🎯 Gegner-Team von {trainer_name} (SW) gefunden:")
+    # Liste der Gegner-Pokémon mit Typen ausgeben
+    for name, level in gegner_team_liste:
+        typen = get_pokemon_typen(name)
+        typen_str = "/".join(typen) if typen else "Typ unbekannt"
+        level_str = f"Lv. {level}" if isinstance(level, int) else f"Lv. {level}" # Handle '?' Level
+        print(f"- {name} ({typen_str}) {level_str}")
+        gegner_daten = {
+            'name': name,
+            'level': level,
+            'types': typen,
+            'attacken': [] # Wird später gefüllt, wenn Analyse gewünscht
+        }
+        gegner_team_daten.append(gegner_daten)
+else:
+    print(f"⚠️ Kein SW-Team für {trainer_name} gefunden oder Fehler beim Abruf.")
+    # Fallback: Verwende Backup-Typen für die Filterfunktion, um zu sehen,
+    # welche DEINER Pokémon Attacken gegen diese Typen hätten.
+    if backup_typen:
+        print(f"⚠️ Verwende Backup-Typen für Filterung der EIGENEN Pokémon: {backup_typen}")
+        # Passe die Filterfunktion an, um Attacken zu finden, die gegen die Backup-Typen effektiv sind
+        # HINWEIS: Dies erfordert eine komplexere Logik (Typ-Effektivitäten)
+        # Einfacher Ansatz: Finde Attacken mit den Backup-Typen (was nicht das Ziel ist)
+        # Wir ändern hier die **aktive** Filterfunktion für die ZUSAMMENFASSUNG unten
+        aktive_filter_funktion = lambda atk: atk['Typ'] in backup_typen and atk['Kategorie'] != 'Status'
+        print(f"Filter für eigene Pokémon angepasst, um Attacken vom Typ {backup_typen} zu suchen.")
+        # Erneute Analyse der eigenen Pokémon mit dem neuen Filter wäre hier sinnvoll, wenn gewünscht.
+    else:
+        print("Keine Backup-Typen definiert.")
+
+# 2. Eigene Pokémon-Liste analysieren (falls definiert und nicht überschrieben)
 print("--- Analyse EIGENER Pokémon (aus list_available_pokemon) ---")
 alle_eigenen_erfuellen_kriterium = True
 pokemon_daten_eigen = []
@@ -356,7 +486,7 @@ if list_available_pokemon: # Nur ausführen, wenn die Liste nicht leer ist
             'attacken': attacken
         })
 
-        gruppen = gruppiere_attacken(attacken, schluessel=grouping_key, filter_funktion=filter_funktion)
+        gruppen = gruppiere_attacken(attacken, schluessel=grouping_key, filter_funktion=aktive_filter_funktion)
 
         hat_passenden_move = any(gruppen.values())  # mind. 1 Attacke in den gefilterten Gruppen vorhanden?
         if not hat_passenden_move:
@@ -380,77 +510,6 @@ elif alle_eigenen_erfuellen_kriterium:
 else:
     print(f"❌ Mindestens ein eigenes Pokémon hat KEINE passende Attacke gemäß Filter.")
 print("----------------------------------------------\n")
-
-
-# 2. Gegner-Team analysieren
-print(f"--- Analyse GEGNER-Team ({trainer_name}) ---")
-gegner_team_daten = []
-aktive_filter_funktion = filter_funktion # Behalte die ursprüngliche Funktion
-
-# Hole Pokémon-Team des Trainers
-gegner_team_liste = get_team_from_trainer(trainer_name)
-
-if gegner_team_liste:
-    print(f"🎯 Gegner-Team von {trainer_name} (SW) gefunden:")
-    # Liste der Gegner-Pokémon mit Typen ausgeben
-    for name, level in gegner_team_liste:
-        typen = get_pokemon_typen(name)
-        typen_str = "/".join(typen) if typen else "Typ unbekannt"
-        level_str = f"Lv. {level}" if isinstance(level, int) else f"Lv. {level}" # Handle '?' Level
-        print(f"- {name} ({typen_str}) {level_str}")
-        gegner_daten = {
-            'name': name,
-            'level': level,
-            'types': typen,
-            'attacken': [] # Wird später gefüllt, wenn Analyse gewünscht
-        }
-        gegner_team_daten.append(gegner_daten)
-    """"
-    # Hier könntest du jetzt eine ähnliche Analyse wie für deine Pokémon durchführen,
-    # wenn du z.B. wissen willst, welche Attacken die Gegner haben könnten.
-    # Beispiel (optional - auskommentieren, wenn nicht benötigt):
-    print(f"\n--- Analyse der möglichen Attacken des GEGNER-Teams (bis zu ihrem Level) ---")
-    alle_gegner_erfuellen_kriterium = True # Beispiel-Kriterium für Gegner
-    gegner_filter = lambda atk: atk['Kategorie'] != 'Status' # Beispiel: Alle nicht-Status Attacken des Gegners anzeigen
-
-    for daten in gegner_team_daten:
-        poke_name = daten['name']
-        # Gegner-Level als Cap nehmen, wenn es eine Zahl ist, sonst global_level_cap? Oder keinen Cap?
-        # Wir nehmen hier das bekannte Level des Gegners als Cap. Wenn '?', dann keinen Level-Cap.
-        gegner_level_cap = daten['level'] if isinstance(daten['level'], int) else None
-        # Holen der Attacken für den Gegner
-        gegner_attacken = get_attacken_gen8_structured(poke_name, gegner_level_cap)
-        daten['attacken'] = gegner_attacken # Speichern für spätere Verwendung
-
-        print(f"\n-- Mögliche Attacken für {poke_name} (bis {f'Level {gegner_level_cap}' if gegner_level_cap else 'höchstem Level'}) --")
-        gegner_gruppen = gruppiere_attacken(gegner_attacken, schluessel="Typ", filter_funktion=gegner_filter) # Nach Typ gruppieren
-
-        if not any(gegner_gruppen.values()):
-            print(">> Keine Attacken nach Filter gefunden.")
-            # alle_gegner_erfuellen_kriterium = False # Anpassen, falls nötig
-        else:
-            for typ, liste in gegner_gruppen.items():
-                print(f"\n== Typ: {typ} ==")
-                # Angepasste Felder für Gegner-Ausgabe
-                formatierte_attacken_ausgabe(liste, ['Name', 'Kategorie', 'Stärke', 'Genauigkeit'])
-    """""
-
-else:
-    print(f"⚠️ Kein SW-Team für {trainer_name} gefunden oder Fehler beim Abruf.")
-    # Fallback: Verwende Backup-Typen für die Filterfunktion, um zu sehen,
-    # welche DEINER Pokémon Attacken gegen diese Typen hätten.
-    if backup_typen:
-        print(f"⚠️ Verwende Backup-Typen für Filterung der EIGENEN Pokémon: {backup_typen}")
-        # Passe die Filterfunktion an, um Attacken zu finden, die gegen die Backup-Typen effektiv sind
-        # HINWEIS: Dies erfordert eine komplexere Logik (Typ-Effektivitäten)
-        # Einfacher Ansatz: Finde Attacken mit den Backup-Typen (was nicht das Ziel ist)
-        # Wir ändern hier die **aktive** Filterfunktion für die ZUSAMMENFASSUNG unten
-        aktive_filter_funktion = lambda atk: atk['Typ'] in backup_typen and atk['Kategorie'] != 'Status'
-        print(f"Filter für eigene Pokémon angepasst, um Attacken vom Typ {backup_typen} zu suchen.")
-        # Erneute Analyse der eigenen Pokémon mit dem neuen Filter wäre hier sinnvoll, wenn gewünscht.
-    else:
-        print("Keine Backup-Typen definiert.")
-
 
 # Finale Zusammenfassung basierend auf dem AKTIVEN Filter
 # (Entweder der Originalfilter oder der angepasste wg. Backup-Typen)
