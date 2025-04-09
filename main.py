@@ -138,89 +138,53 @@ def get_pokemon_typen(pokemon_name: str) -> List[str]:
         print(f"Ein unerwarteter Fehler ist beim Holen der Typen für {pokemon_name} aufgetreten: {e}")
         return []
 
-def get_team_from_trainer(trainer_name: str) -> Optional[List[Tuple[str, int | str]]]:
+def get_team_from_trainer(trainer_name: str) -> Optional[List[str]]:
     """
-    Holt die Pokémon-Namen und Level aus dem Arenakampf-Abschnitt eines Trainers (z.B. Papella).
-    Sucht nach Teams für das Spiel Schwert (SW).
+    Holt die Pokémon-Namen aus dem Arenakampf-Abschnitt eines Trainers (z.B. Papella).
     Wenn nichts gefunden wird, gib None zurück.
-    Gibt eine Liste von Tupeln zurück: [(Name, Level), ...]. Level kann '?' sein.
     """
     url = f"https://www.pokewiki.de/{trainer_name}"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print(f"⚠️ Trainerseite nicht gefunden oder Fehler beim Abruf: {url} ({e})")
+    response = requests.get(url)
+    if response.status_code != 200:
+        print(f"⚠️ Trainerseite nicht gefunden: {url}")
         return None
 
     soup = BeautifulSoup(response.content, "html.parser")
 
-    pokemon_list_with_levels = []
-    found_sw_team = False
+    list_available_pokemon = []
 
     # Teams suchen
     teams = soup.find_all("div", class_="team")
     for team in teams:
-        # Schritt 1: sicherstellen, dass das richtige Spiel (SW) gemeint ist
-        game_tags_container = team.find("span", class_="hidden") # Oft sind die Tags hier drin
-        if not game_tags_container:
-            continue
-
-        game_tags = game_tags_container.find_all("span", class_="sk_item")
+        # Schritt 1: sicherstellen, dass das richtige Spiel (SW/SH) gemeint ist
+        game_tags = team.find_all("span", class_="sk_item")
         if not game_tags:
             continue
-
-        is_sw_team = False
-        # Überprüfen, ob 'SW' als Tag vorhanden ist und nicht 'EX' etc. dominant ist
-        tag_texts = {tag.text.strip() for tag in game_tags}
-        if "SW" in tag_texts and "EX" not in tag_texts and "KA" not in tag_texts and "PU" not in tag_texts: # Fokus auf SW
-            is_sw_team = True
-
-        if not is_sw_team:
+        contains_only_sw = False
+        for tag in game_tags:
+            if "EX" in tag.text:
+                continue
+            if "SW" == tag.text.strip():
+                contains_only_sw = True
+        if not contains_only_sw:
             continue
 
-        found_sw_team = True # Wir haben mindestens ein SW-Team gefunden
+        # Pokémon-Daten extrahieren
+        pokes = team.find_all("div", class_="clicktoggle", attrs={"data-type": "set"}) + team.find_all("div", class_="clicktoggle clicktoggle-active", attrs={"data-type": "set"})
 
-        # Pokémon-Daten extrahieren (sowohl aktive als auch inaktive Toggles)
-        poke_divs = team.find_all("div", class_=lambda c: c and 'clicktoggle' in c, attrs={"data-type": "set"})
-
-        for poke_div in poke_divs:
+        for poke_div in pokes:
             # Basisdaten: Pokémonname, Geschlecht, Level
-            header_div = poke_div.find("div", class_="header")
-            if not header_div: continue # Sicherheitscheck
+            text = poke_div.get_text(separator=" ", strip=True)
+            name = text.split("♀")[0].split("♂")[0].split()[0].strip()  # Nur das erste Wort
+            level = text.split("Lv.")[1].strip() if "Lv." in text else "?"
 
-            # Namen extrahieren (manchmal im <a> Tag, manchmal direkt)
-            name_tag = header_div.find("a")
-            if name_tag:
-                name = name_tag.get_text(strip=True)
-            else: # Fallback, falls kein Link da ist
-                text_content = header_div.get_text(separator=" ", strip=True)
-                # Versuchen, bekannte Marker wie Level oder Geschlecht zu entfernen
-                name = text_content.split("♀")[0].split("♂")[0].split("Lv.")[0].strip()
-                # Oft steht der Name als erstes Wort da
-                if ' ' in name: name = name.split()[0]
+            # In die Liste einfügen
+            list_available_pokemon.append((name, int(level) if level.isdigit() else level))
 
-            # Level extrahieren
-            level = "?"
-            level_tag = header_div.find("span", title=lambda t: t and t.startswith("Level"))
-            if level_tag:
-                level_text = level_tag.get_text(strip=True)
-                if level_text.isdigit():
-                    level = int(level_text)
+    # Duplikate entfernen und nur relevante Pokémon-Namen behalten
+    list_available_pokemon = list(dict.fromkeys(list_available_pokemon))
 
-            # In die Liste einfügen (nur wenn Name vorhanden)
-            if name:
-                pokemon_list_with_levels.append((name, level))
-
-    # Duplikate entfernen (basierend auf Name und Level) und nur zurückgeben, wenn SW-Team gefunden wurde
-    if found_sw_team:
-        # `dict.fromkeys` entfernt Duplikate und behält die Reihenfolge bei (ab Python 3.7)
-        unique_pokemon = list(dict.fromkeys(pokemon_list_with_levels))
-        return unique_pokemon
-    else:
-        print(f"Kein spezifisches SW-Team für {trainer_name} gefunden.")
-        return None
-
+    return list_available_pokemon
 
 def get_attacken_gen8_structured(pokemon_name, max_level=None):
     url = f"https://www.pokewiki.de/index.php?title={pokemon_name}/Attacken&action=edit"
@@ -301,7 +265,6 @@ def get_attacken_gen8_structured(pokemon_name, max_level=None):
             pass # Aktuell wird die erste gefundene behalten.
 
     return list(unique_attacks.values())
-
 
 def gruppiere_attacken(
         attacken: List[Dict[str, Any]],
@@ -442,7 +405,7 @@ if gegner_team_liste:
             'attacken': [] # Wird später gefüllt, wenn Analyse gewünscht
         }
         gegner_team_daten.append(gegner_daten)
-
+    """"
     # Hier könntest du jetzt eine ähnliche Analyse wie für deine Pokémon durchführen,
     # wenn du z.B. wissen willst, welche Attacken die Gegner haben könnten.
     # Beispiel (optional - auskommentieren, wenn nicht benötigt):
@@ -470,7 +433,7 @@ if gegner_team_liste:
                 print(f"\n== Typ: {typ} ==")
                 # Angepasste Felder für Gegner-Ausgabe
                 formatierte_attacken_ausgabe(liste, ['Name', 'Kategorie', 'Stärke', 'Genauigkeit'])
-
+    """""
 
 else:
     print(f"⚠️ Kein SW-Team für {trainer_name} gefunden oder Fehler beim Abruf.")
