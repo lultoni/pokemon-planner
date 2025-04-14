@@ -9,38 +9,63 @@ import json
 # --------------- GLOBAL VARS ---------------
 
 list_available_pokemon = (
-    ("Vulnona", 39),
-    ("Shnebedeck", 28),
-    ("Flunschlik", 29),
-    ("Golbit", 33),
-    ("Strepoli", 34),
-    ("Pionskora", 34),
-    ("Kamalm", 32),
-    ("Phlegleon", 31),
-    ("Psiaugon", 32),
-    ("Smogon", 30),
-    ("Schalellos", 30),
-    ("Pelzebub", 38),
-    ("Maritellit", 36),
-    ("Barrakiefa", 30),
-    ("Garados", 35),
-    ("Zurrokex", 32),
-    ("Salanga", 29),
-    ("Schlaraffel", 24),
+    ("Vulnona", 64),
+    ("Rexblisar", 60),
+    ("Flunschlik", 58),
+    ("Golgantes", 65),
+    ("Strepoli", 61),
+    ("Piondragi", 48),
+    ("Intelleon", 60),
+    ("Psiaugon", 57),
+    ("Smogon", 35),
+    ("Schalellos", 35),
+    ("Olangaar", 60),
+    ("Maritellit", 42),
+    ("Barrakiefa", 34),
+    ("Garados", 53),
+    ("Irokex", 32),
+    ("Salanga", 35),
+    ("Schlaraffel", 36),
+    ("Laukaps", 46),
+    ("Bronzong", 41),
+    ("Snomnom", 44),
+    ("Keifel", 45),
+    ("Wailmer", 45),
+    ("Kingler", 43),
+    ("Rizeros", 46),
 )
 
 fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
-global_level_cap = 55
+global_level_cap = 70
 nutze_individuellen_level = False
 grouping_key = "Art"
+minimum_strength_move = 80
+ALLOW_TP_MOVES = False
 # filter funktion wird nach der gegnerischen team analyse unten gemacht
-trainer_name = "Papella"
-backup_typen = ["Fee"]
 def filter_funktion_error(atk):
     # Beispiel: Suche nach Stahl-Attacken, die keine Status-Attacken sind
-    return atk['Typ'] == 'Stahl' and atk['Kategorie'] != 'Status'
+    return ((atk['Typ'] == 'Stahl'
+            and atk['Kategorie'] != 'Status'
+            and is_strong_enough(atk['Stärke'], minimum_strength_move))
+            and is_allowed_level(atk['Level']))
+trainer_name = "asdf"
+backup_typen = ["Feuer", "Boden", "Gestein", "Unlicht"]
 
 # --------------- FUNCTION DEFINITIONS ---------------
+
+
+def is_allowed_level(level):
+    if ALLOW_TP_MOVES:
+        return True
+    if isinstance(level, str) and level.upper().startswith("TP"):
+        return False
+    return True
+
+def is_strong_enough(stärke, minimum):
+    try:
+        return int(stärke) >= minimum
+    except (ValueError, TypeError):
+        return True
 
 def get_pokemon_typen(pokemon_name: str) -> List[str]:
     """
@@ -484,7 +509,10 @@ else:
         # HINWEIS: Dies erfordert eine komplexere Logik (Typ-Effektivitäten)
         # Einfacher Ansatz: Finde Attacken mit den Backup-Typen (was nicht das Ziel ist)
         # Wir ändern hier die **aktive** Filterfunktion für die ZUSAMMENFASSUNG unten
-        aktive_filter_funktion = lambda atk: atk['Typ'] in backup_typen and atk['Kategorie'] != 'Status'
+        aktive_filter_funktion = lambda atk: ((atk['Typ'] in backup_typen
+                                              and atk['Kategorie'] != 'Status'
+                                              and is_strong_enough(atk['Stärke'], minimum_strength_move))
+                                              and is_allowed_level(atk['Level']))
         print(f"Filter für eigene Pokémon angepasst, um Attacken vom Typ {backup_typen} zu suchen.")
         # Erneute Analyse der eigenen Pokémon mit dem neuen Filter wäre hier sinnvoll, wenn gewünscht.
     else:
@@ -492,20 +520,40 @@ else:
 
 # --- Teamanalyse mit Typ-Effektivität ---
 
-# Annahme: Die Typentabelle wurde zuvor geladen:
 type_chart = load_type_chart("pokemon_type_chart.json")
-# Gegnerische Team-Daten (gegner_team_daten) sind zuvor als Liste von Dictionaries extrahiert worden,
-# wobei jedes Element z. B. so aussieht:
-# { 'name': 'Papella', 'level': 36, 'types': ['Fee', ...], 'attacken': [] }
 optimal_attack_types = determine_optimal_attack_types(type_chart, gegner_team_daten)
 
 if optimal_attack_types:
     print(f"Optimale Angriffs-Typen gegen {trainer_name}: {optimal_attack_types}")
     # Setze aktive_filter_funktion: Akzeptiere nur Attacken, die einen der optimalen Typen haben, und keine Status-Attacken
-    aktive_filter_funktion = lambda atk: atk['Typ'] in optimal_attack_types and atk['Kategorie'] != 'Status'
+    aktive_filter_funktion = lambda atk: (atk['Typ'] in optimal_attack_types
+                                          and atk['Kategorie'] != 'Status'
+                                          and is_strong_enough(atk['Stärke'], minimum_strength_move)
+                                          and is_allowed_level(atk['Level']))
 else:
     print("Keine optimalen Angriffs-Typen gefunden. Verwende Backup-Typen.")
-    aktive_filter_funktion = lambda atk: atk['Typ'] in backup_typen and atk['Kategorie'] != 'Status'
+    aktive_filter_funktion = lambda atk: (atk['Typ'] in backup_typen
+                                          and atk['Kategorie'] != 'Status'
+                                          and is_strong_enough(atk['Stärke'], minimum_strength_move)
+                                          and is_allowed_level(atk['Level']))
+
+# Zusätzliche Analyse: Für jedes gegnerische Pokémon bestimmen, welche Angriffstypen am effektivsten sind
+print("\n--- Effektivste Angriffstypen pro gegnerischem Pokémon ---")
+attack_types = list(type_chart.keys())
+for opp in gegner_team_daten:
+    best_multiplier = 0.0
+    best_types = []
+    for atk_type in attack_types:
+        eff = get_effectiveness(type_chart, atk_type, opp.get('types', []))
+        if eff is None:
+            eff = 1.0  # Standardwert, falls kein Wert vorhanden ist
+        if eff > best_multiplier:
+            best_multiplier = eff
+            best_types = [atk_type]
+        elif eff == best_multiplier:
+            best_types.append(atk_type)
+    opp_types = "/".join(opp.get('types', [])) if opp.get('types') else "unbekannt"
+    print(f"- Gegen {opp['name']} ({opp_types}): optimale Angriffstypen: {best_types} (Effektivität: {best_multiplier})")
 
 # 2. Eigene Pokémon-Liste analysieren (falls definiert und nicht überschrieben)
 print("--- Analyse EIGENER Pokémon (aus list_available_pokemon) ---")
