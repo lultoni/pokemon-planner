@@ -50,8 +50,19 @@ def get_effectiveness(type_chart, attack_type, defense_types):
         print("Fehler: Type Chart wurde nicht korrekt geladen.")
         return None
 
-    if not isinstance(defense_types, (list, tuple)) or not 1 <= len(defense_types) <= 2:
-        print(f"Fehler: defense_types muss eine Liste/Tuple mit 1 oder 2 Typen sein, erhalten: {defense_types}")
+    # Überprüfe, ob defense_types eine Liste oder ein Tupel ist
+    if not isinstance(defense_types, (list, tuple)):
+        print(f"Fehler: defense_types muss eine Liste oder ein Tupel sein, erhalten: {type(defense_types)}")
+        return None
+
+    # Überprüfe die Anzahl der Typen in defense_types
+    if not 1 <= len(defense_types) <= 2:
+        print(f"Fehler: defense_types muss 1 oder 2 Typen enthalten, erhalten: {len(defense_types)}")
+        return None
+
+    # Stelle sicher, dass alle Typen in defense_types Strings sind
+    if not all(isinstance(t, str) for t in defense_types):
+        print(f"Fehler: Alle Elemente in defense_types müssen Strings sein, erhalten: {defense_types}")
         return None
 
     # Hole das Unter-Dictionary für den Angriffstyp (sicher mit .get)
@@ -86,10 +97,20 @@ def get_effectiveness(type_chart, attack_type, defense_types):
         # Die Logik oben stellt sicher, dass immer der korrekte, sortierte Schlüssel verwendet wird.
         return None # Oder vielleicht 1.0 als Standard zurückgeben? None ist klarer bei Fehlern.
 
-    return effectiveness
+    # Konvertiere das Ergebnis sicherheitshalber in ein float
+    try:
+        return float(effectiveness)
+    except (ValueError, TypeError):
+        print(f"Fehler: Ungültiger Effektivitätswert '{effectiveness}' für Schlüssel '{lookup_key}' bei Angreifer '{attack_type}'.")
+        return None
 
+
+# --- Hauptlogik ---
+
+# Laden der Typentabelle
 type_chart = load_type_chart()
 
+# Liste der verteidigenden Pokémon (Name, Typen-Tupel)
 name_liste = (
     ("Vulnona", ("Feuer",)),
     ("Rexblisar", ("Pflanze", "Eis")),
@@ -117,12 +138,7 @@ name_liste = (
     ("Rizeros", ("Boden", "Gestein")),
 )
 
-pokemon_typen = [
-    "Normal", "Feuer", "Wasser", "Elektro", "Pflanze", "Eis",
-    "Kampf", "Gift", "Boden", "Flug", "Psycho", "Käfer",
-    "Gestein", "Geist", "Drache", "Unlicht", "Stahl", "Fee"
-]
-
+# Liste der angreifenden Pokémon (Name, Attacken-Typen-Tupel)
 attack_list = (
     ("Durengard", ("Geist", "Kampf", "Stahl")),
     ("Katapuldra", ("Geist", "Feuer", "Elektro", "Drache")),
@@ -132,16 +148,73 @@ attack_list = (
     ("Glurak", ("Feuer", "Flug", "Pflanze", "Gestein")),
 )
 
-for attacker_name, attack_types in attack_list:
-    print(f"\n--- {attacker_name} ---")
-    for defender_name, defender_types in name_liste:
-        effectiveness_results = []
-        for attack_type in attack_types:
-            effectiveness = get_effectiveness(type_chart, attack_type, list(defender_types))
-            if effectiveness is not None and effectiveness > 1.0:
-                effectiveness_results.append((attack_type, effectiveness))
+# Dictionary, um die detaillierten Effektivitäten pro Angreifer/Verteidiger zu speichern
+# Struktur: { attacker_name: { defender_name: { attack_type: effectiveness, ... }, ... }, ... }
+detailed_effectiveness = {}
 
-        if effectiveness_results:
-            print(f"{defender_name}:")
-            for attack_type, multiplier in effectiveness_results:
-                print(f"  {attack_type} x{multiplier}")
+# Nur fortfahren, wenn die Typentabelle erfolgreich geladen wurde
+if type_chart:
+    print("\n--- Analyse der detaillierten Pokémon-Effektivitäten ---")
+
+    # Gehe jeden Angreifer durch
+    for attacker_name, attacker_move_types in attack_list:
+        # Initialisiere das Unter-Dictionary für diesen Angreifer
+        effectiveness_for_this_attacker = {}
+
+        # Gehe jedes verteidigende Pokémon durch
+        for defender_name, defender_types in name_liste:
+            # Initialisiere das Dictionary für die Effektivitäten der Attacken dieses Angreifers gegen diesen Verteidiger
+            effectiveness_per_move = {}
+
+            # Gehe jede Attacke des aktuellen Angreifers durch
+            for attack_type in attacker_move_types:
+                # Ermittle die Effektivität dieser Attacke gegen den Verteidiger
+                effectiveness = get_effectiveness(type_chart, attack_type, defender_types)
+
+                # Speichere die Effektivität (oder 'N/A' bei Fehler)
+                if effectiveness is None:
+                    # Optional: Gib hier immer noch das Problem aus, falls gewünscht
+                    # print(f"  -> Problem bei Berechnung: {attacker_name}'s {attack_type} gegen {defender_name} {defender_types}")
+                    effectiveness_per_move[attack_type] = 'N/A' # Not Available / Nicht verfügbar
+                else:
+                    effectiveness_per_move[attack_type] = effectiveness
+
+            # Speichere die gesammelten Effektivitäten für diesen Verteidiger unter dem Angreifer
+            effectiveness_for_this_attacker[defender_name] = effectiveness_per_move
+
+        # Speichere die Ergebnisse für den aktuellen Angreifer im Haupt-Dictionary
+        detailed_effectiveness[attacker_name] = effectiveness_for_this_attacker
+
+    # Ausgabe der Ergebnisse im gewünschten Format
+    print("\n\n--- Ergebnis: Detaillierte Effektivitäten pro Angreifer ---")
+    for attacker_name, defender_effectiveness_map in detailed_effectiveness.items():
+        attacker_header = f"=== {attacker_name} ==="
+        print(f"\n{attacker_header}") # Kopfzeile für den Angreifer
+
+        # Sortiere die Verteidiger alphabetisch für eine konsistente Ausgabe
+        sorted_defenders = sorted(defender_effectiveness_map.items())
+
+        for defender_name, move_effectiveness_map in sorted_defenders:
+            # Baue den String für die Effektivitätsdetails zusammen
+            details_parts = []
+            # Sortiere die Attacken-Typen für eine konsistente Reihenfolge (optional, aber empfohlen)
+            sorted_moves = sorted(move_effectiveness_map.items())
+            for move, eff in sorted_moves:
+                details_parts.append(f"{move}: {eff}")
+            details_string = ", ".join(details_parts)
+
+            # Finde die Typen des Verteidigers für die Ausgabe (optional, aber hilfreich)
+            defender_types_str = ""
+            for d_name, d_types in name_liste:
+                if d_name == defender_name:
+                    defender_types_str = f" {d_types}"
+                    break
+
+            # Gib die Zeile für den Verteidiger aus
+            print(f"- {defender_name}{defender_types_str} ({details_string})")
+
+        # Fußzeile für den Angreifer
+        print("=" * len(attacker_header)) # Trennlinie gleicher Länge wie die Kopfzeile
+
+else:
+    print("\nAnalyse kann nicht durchgeführt werden, da die Typen-Effektivitätstabelle nicht geladen werden konnte.")
