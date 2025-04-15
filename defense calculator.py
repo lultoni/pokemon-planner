@@ -1,4 +1,5 @@
 import json
+import sys
 
 def load_type_chart(filename="pokemon_type_chart.json"):
     """
@@ -152,6 +153,24 @@ attack_list = (
 # Struktur: { attacker_name: { defender_name: { attack_type: effectiveness, ... }, ... }, ... }
 detailed_effectiveness = {}
 
+# --- ANSI Color Codes ---
+# Prüfen, ob das Terminal wahrscheinlich Farben unterstützt
+# (Einfache Prüfung - funktioniert möglicherweise nicht in allen Umgebungen, z.B. Dateiumleitung)
+supports_color = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
+supports_color = True
+
+# Farben definieren (nur verwenden, wenn unterstützt)
+COLOR = {
+    "RED": "\033[91m" if supports_color else "",        # Super effektiv (> 1.0)
+    "GREEN": "\033[92m" if supports_color else "",      # Nicht sehr effektiv (< 1.0, > 0)
+    "YELLOW": "\033[93m" if supports_color else "",     # Neutral (== 1.0) - Optional, könnte auch default sein
+    "BLUE": "\033[94m" if supports_color else "",       # Immun (== 0.0)
+    "GREY": "\033[90m" if supports_color else "",       # N/A (Nicht verfügbar) - Optional
+    "RESET": "\033[0m" if supports_color else "",       # Reset aller Formatierungen
+}
+# --- Ende ANSI Color Codes ---
+
+
 # Nur fortfahren, wenn die Typentabelle erfolgreich geladen wurde
 if type_chart:
     print("\n--- Analyse der detaillierten Pokémon-Effektivitäten ---")
@@ -173,9 +192,7 @@ if type_chart:
 
                 # Speichere die Effektivität (oder 'N/A' bei Fehler)
                 if effectiveness is None:
-                    # Optional: Gib hier immer noch das Problem aus, falls gewünscht
-                    # print(f"  -> Problem bei Berechnung: {attacker_name}'s {attack_type} gegen {defender_name} {defender_types}")
-                    effectiveness_per_move[attack_type] = 'N/A' # Not Available / Nicht verfügbar
+                    effectiveness_per_move[attack_type] = 'N/A'
                 else:
                     effectiveness_per_move[attack_type] = effectiveness
 
@@ -185,25 +202,65 @@ if type_chart:
         # Speichere die Ergebnisse für den aktuellen Angreifer im Haupt-Dictionary
         detailed_effectiveness[attacker_name] = effectiveness_for_this_attacker
 
-    # Ausgabe der Ergebnisse im gewünschten Format
-    print("\n\n--- Ergebnis: Detaillierte Effektivitäten pro Angreifer ---")
+    # Ausgabe der Ergebnisse im gewünschten Format, jetzt mit Sortierung und Farben
+    print("\n\n--- Ergebnis: Detaillierte Effektivitäten pro Angreifer (sortiert von Bester zu Schlechtester Verteidigung) ---")
     for attacker_name, defender_effectiveness_map in detailed_effectiveness.items():
         attacker_header = f"=== {attacker_name} ==="
         print(f"\n{attacker_header}") # Kopfzeile für den Angreifer
 
-        # Sortiere die Verteidiger alphabetisch für eine konsistente Ausgabe
-        sorted_defenders = sorted(defender_effectiveness_map.items())
+        # --- Sortierlogik (unverändert) ---
+        def calculate_sort_score(defender_item_tuple):
+            move_effectiveness_map = defender_item_tuple[1]
+            total_score = 0.0
+            calculation_possible = True
+            for effectiveness in move_effectiveness_map.values():
+                if isinstance(effectiveness, (int, float)):
+                    total_score += effectiveness
+                else:
+                    calculation_possible = False
+                    break
+            return total_score if calculation_possible else float('inf')
 
+        sorted_defenders = sorted(defender_effectiveness_map.items(), key=calculate_sort_score)
+        # --- Ende Sortierlogik ---
+
+
+        # Gehe durch die *sortierte* Liste der Verteidiger
         for defender_name, move_effectiveness_map in sorted_defenders:
             # Baue den String für die Effektivitätsdetails zusammen
             details_parts = []
-            # Sortiere die Attacken-Typen für eine konsistente Reihenfolge (optional, aber empfohlen)
+            # Sortiere die Attacken-Typen für eine konsistente Reihenfolge in der Ausgabe
             sorted_moves = sorted(move_effectiveness_map.items())
+
+            # --- NEU: Farbige Ausgabe der Effektivitäten ---
             for move, eff in sorted_moves:
-                details_parts.append(f"{move}: {eff}")
+                color_code = ""
+                eff_str = str(eff) # Standard-String-Repräsentation
+
+                if isinstance(eff, (int, float)):
+                    if eff > 1.0:
+                        color_code = COLOR["RED"]
+                    elif eff == 1.0:
+                        # Optional: Farbe für neutral oder keine Farbe
+                        # color_code = COLOR["YELLOW"] # Gelb für Neutral
+                        color_code = "" # Keine spezielle Farbe für Neutral
+                    elif eff == 0.0:
+                        color_code = COLOR["BLUE"]
+                    elif eff < 1.0: # Hier sind Werte zwischen 0 und 1
+                        color_code = COLOR["GREEN"]
+                    # Optional: Formatierung der Zahl (z.B. auf eine Nachkommastelle)
+                    # eff_str = f"{eff:.1f}"
+                else: # Behandlung für 'N/A'
+                    color_code = COLOR["GREY"] # Blau für 'N/A' oder "" für keine Farbe
+                    eff_str = "N/A" # Stelle sicher, dass 'N/A' angezeigt wird
+
+                # Füge den formatierten Teil mit Farbe hinzu
+                details_parts.append(f"{move}: {color_code}{eff_str}{COLOR['RESET']}")
+            # --- Ende Farbige Ausgabe ---
+
             details_string = ", ".join(details_parts)
 
-            # Finde die Typen des Verteidigers für die Ausgabe (optional, aber hilfreich)
+            # Finde die Typen des Verteidigers für die Ausgabe (unverändert)
             defender_types_str = ""
             for d_name, d_types in name_liste:
                 if d_name == defender_name:
@@ -212,6 +269,7 @@ if type_chart:
 
             # Gib die Zeile für den Verteidiger aus
             print(f"- {defender_name}{defender_types_str} ({details_string})")
+
 
         # Fußzeile für den Angreifer
         print("=" * len(attacker_header)) # Trennlinie gleicher Länge wie die Kopfzeile

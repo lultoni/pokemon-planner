@@ -233,8 +233,77 @@ Pokemon von Delion:
   - Schwächen: Gestein (Wasser, Elektro)
 
 Strategie zum Gewinnen:
-- asdf
+- Fifi Feuer-attacke gegen Durengard
+- Gegen Katapuldra
+  - Option 1: Fifi Zauberschein
+  - Option 2:
+    - Schalellos (Gastrodon) schwächt so weit es geht
+    - Bubinho Switch in, Ränkeschmied Setup
+    - Bubinho Special Attack kill (unlicht oder fee macht keinen unterschied)
+- Gegen Maxax
+  - Bubinho Zauberschein FTW
+- Gegen Rihornior
+  - Bubinho Special Attack Kill, unlicht oder fee again
+  - Falls Bubinho dead, barrakiefa taucher
+- Gortrom
+  - Bubinho again falls möglich
+  - sonst Fifi Fire Attack
+- Glurak
+  - Bubinho maybe vorarbeit
+  - Bubatz Gestein Dynamax Pray ig
+- Defensive best Matchups mit 2x Moves
+  - Durengard
+    - Garados ('Wasser', 'Flug') (Geist: 1.0, Kampf: 0.5, Stahl: 0.5)
+    - Vulnona ('Feuer',) (Geist: 1.0, Kampf: 1.0, Stahl: 0.5)
+    - Piondragi ('Gift', 'Unlicht') (Geist: 0.5, Kampf: 1.0, Stahl: 1.0)
+    - Intelleon ('Wasser',) (Geist: 1.0, Kampf: 1.0, Stahl: 0.5)
+    - Schalellos ('Wasser',) (Geist: 1.0, Kampf: 1.0, Stahl: 0.5)
+    - Barrakiefa ('Wasser',) (Geist: 1.0, Kampf: 1.0, Stahl: 0.5)
+    - Kingler ('Wasser',) (Geist: 1.0, Kampf: 1.0, Stahl: 0.5)
+  - Katapuldra
+    - Olangaar ('Unlicht', 'Fee') (Drache: 0.0, Elektro: 1.0, Feuer: 1.0, Geist: 0.5)
+    - Rizeros ('Boden', 'Gestein') (Drache: 1.0, Elektro: 0.0, Feuer: 0.5, Geist: 1.0)
+    - Schlaraffel ('Normal',) (Drache: 1.0, Elektro: 1.0, Feuer: 1.0, Geist: 0.0)
+    - Vulnona ('Feuer',) (Drache: 1.0, Elektro: 1.0, Feuer: 0.5, Geist: 1.0)
+  - Maxax
+    - Golgantes ('Geist', 'Boden') (Boden: 1.0, Drache: 1.0, Gift: 0.25, Stahl: 1.0)
+    - Strepoli ('Kampf',) (Boden: 1.0, Drache: 1.0, Gift: 1.0, Stahl: 1.0)
+    - Irokex ('Unlicht', 'Kampf') (Boden: 1.0, Drache: 1.0, Gift: 1.0, Stahl: 1.0)
+  - Rihornior
+    - Golgantes ('Geist', 'Boden') (Boden: 1.0, Feuer: 1.0, Gestein: 0.5, Käfer: 0.5)
+    - Intelleon ('Wasser',) (Boden: 1.0, Feuer: 0.5, Gestein: 1.0, Käfer: 1.0)
+    - Schalellos ('Wasser',) (Boden: 1.0, Feuer: 0.5, Gestein: 1.0, Käfer: 1.0)
+    - Barrakiefa ('Wasser',) (Boden: 1.0, Feuer: 0.5, Gestein: 1.0, Käfer: 1.0)
+    - Wailmer ('Wasser',) (Boden: 1.0, Feuer: 0.5, Gestein: 1.0, Käfer: 1.0)
+    - Kingler ('Wasser',) (Boden: 1.0, Feuer: 0.5, Gestein: 1.0, Käfer: 1.0)
+  - Gortrom
+    - Rexblisar ('Pflanze', 'Eis') (Boden: 0.5, Pflanze: 0.5, Unlicht: 1.0)
+    - Garados ('Wasser', 'Flug') (Boden: 0.0, Pflanze: 1.0, Unlicht: 1.0)
+    - Laukaps ('Käfer',) (Boden: 0.5, Pflanze: 0.5, Unlicht: 1.0)
+    - Olangaar ('Unlicht', 'Fee') (Boden: 1.0, Pflanze: 1.0, Unlicht: 0.25)
+    - Irokex ('Unlicht', 'Kampf') (Boden: 1.0, Pflanze: 1.0, Unlicht: 0.25)
+    - Strepoli ('Kampf',) (Boden: 1.0, Pflanze: 1.0, Unlicht: 0.5)
+  - Glurak
+    - Piondragi ('Gift', 'Unlicht') (Feuer: 1.0, Flug: 1.0, Gestein: 1.0, Pflanze: 0.5)
+    - Olangaar ('Unlicht', 'Fee') (Feuer: 1.0, Flug: 1.0, Gestein: 1.0, Pflanze: 1.0)
 
 ### Pokemon für dieses Match
 
-- asdf
+- Fifi
+  - Feuer Attacke
+  - Zauberschein
+- Schalellos
+  - Lehmschelle
+  - Genesung
+  - Schutzschild
+  - Wasser Damage Attacke
+- Bubinho
+  - Ränkeschmied
+  - Zauberschein
+  - Diebeskuss für Healing
+  - Unlicht Special Attacke
+- Barrakiefa
+  - Taucher
+- Bubatz (Dynamax Level 10)
+  - Gestein Attacke
+  - Eispunch ding

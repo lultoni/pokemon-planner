@@ -39,7 +39,7 @@ fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit'
 global_level_cap = 70
 nutze_individuellen_level = False
 grouping_key = "Art"
-minimum_strength_move = 80
+minimum_strength_move = 70
 ALLOW_TP_MOVES = False
 # filter funktion wird nach der gegnerischen team analyse unten gemacht
 def filter_funktion_error(atk):
@@ -49,7 +49,7 @@ def filter_funktion_error(atk):
             and is_strong_enough(atk['Stärke'], minimum_strength_move))
             and is_allowed_level(atk['Level']))
 trainer_name = "asdf"
-backup_typen = ["Feuer", "Boden", "Gestein", "Unlicht"]
+backup_typen = ['Geist', 'Unlicht', 'Feuer', 'Boden']
 
 # --------------- FUNCTION DEFINITIONS ---------------
 

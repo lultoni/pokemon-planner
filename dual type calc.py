@@ -96,7 +96,7 @@ pokemon_typen = [
     "Gestein", "Geist", "Drache", "Unlicht", "Stahl", "Fee"
 ]
 
-defensive_types = ['Boden', 'Geist']
+defensive_types = ['Stahl', 'Geist']
 
 print(f"\nSchwächen für Typ {str(defensive_types)}")
 
