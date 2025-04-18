@@ -307,3 +307,73 @@ Strategie zum Gewinnen:
 - Bubatz (Dynamax Level 10)
   - Gestein Attacke
   - Eispunch ding
+
+## Evil Team Matches
+
+### Oleana
+
+Pokemon von Oleana:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+
+Strategie zum Gewinnen:
+- asdf
+
+### Rose
+
+Pokemon von Rose:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+- asdf ()
+  - Typ:
+  - Attacken:
+  - Schwächen:
+  - Notes:
+
+Strategie zum Gewinnen:
+- asdf
+
+### Pokemon für dieses Match
+
+- asdf
