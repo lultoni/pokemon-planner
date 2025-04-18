@@ -6,6 +6,16 @@
   - Gegner Team einladen, entweder trainer name und spezifischer kampf oder einfach die liste der pokemon mit allen eckdaten die vorhanden sind
   - Eigene Pokemon einladen (muss detailiert sein, aber wenn es einmal drin ist, ist es geil sag ich)
   - pro gegnerpokemon schauen welches eigene pokemon mit welcher attacke am schnellsten einen kill bekommt
+- einteilung der eigenen pokemon in potentielle rollen basierend auf deren moves
+
+- Gegner Team basierend auf Trainer und Battle in Datensatz speichern mit allen pokmeon, attacken, iv/ev, etc (levelcap)
+- Eigene Pokemon auch in so einen Datensatz einschreiben, alle möglichen attacken werden auch irgendwo gespeichert
+- Ich will nur sagen welches gegnerteam ich fighte als nächstes, es sagt mir dann welches team am besten passt basierend auf damage calcs
+  - Pro geg-pok welches pokemon kann am schnellsten KO (oder einfach nur OHKO) und was für ein setup dafür gebraucht wäre (gebrauchte parameter)
+- so farbe und emojis benutzen
+- Was auch reichen könnte: gucken wer gut defensiv gegen die gegner ist und basierend darauf und wer gegen die gegner sehr effektive moves hat (oder tatik kontern kann) die ranken und die besten pro pokemon auswählen (wer bei mehreren weit oben ist ist auch ein cooler pluspunkt)
+  - Stats that are good against the opponent
+  - The same goes for the attacks, which should take opponents stats into consideration
 
 ### Code TODOs
 - Nur einmal alle Moves und Types und so fetchen, das irgendwo speichern und dann später einfach nur check ob vorhanden
