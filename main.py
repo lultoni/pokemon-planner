@@ -4,7 +4,7 @@ import re
 from collections import defaultdict
 from typing import List, Dict, Any, Optional, Callable, Tuple
 from bs4 import BeautifulSoup
-import json
+import type_effectiveness
 
 # --------------- GLOBAL VARS ---------------
 
@@ -67,7 +67,7 @@ def is_strong_enough(stärke, minimum):
     except (ValueError, TypeError):
         return True
 
-def get_pokemon_typen(pokemon_name: str) -> List[str]:
+def get_pokemon_typen_from_wiki(pokemon_name: str) -> List[str]:
     """
     Holt die Typen eines Pokémon von seiner Pokewiki-Seite (Bearbeiten-Ansicht),
     indem explizit nach Typ, Typ2, Typ_a, Typ2_a und TypZusatz_a gesucht wird.
@@ -164,7 +164,7 @@ def get_pokemon_typen(pokemon_name: str) -> List[str]:
         print(f"Ein unerwarteter Fehler ist beim Holen der Typen für {pokemon_name} aufgetreten: {e}")
         return []
 
-def get_team_from_trainer(trainer_name: str) -> Optional[List[str]]:
+def get_team_from_trainer_from_wiki(trainer_name: str) -> Optional[List[str]]:
     """
     Holt die Pokémon-Namen aus dem Arenakampf-Abschnitt eines Trainers (z.B. Papella).
     Wenn nichts gefunden wird, gib None zurück.
@@ -212,7 +212,7 @@ def get_team_from_trainer(trainer_name: str) -> Optional[List[str]]:
 
     return list_available_pokemon
 
-def get_attacken_gen8_structured(pokemon_name, max_level=None):
+def get_attacken_gen8_structured_from_wiki(pokemon_name, max_level=None):
     url = f"https://www.pokewiki.de/index.php?title={pokemon_name}/Attacken&action=edit"
     try:
         response = requests.get(url)
@@ -359,94 +359,6 @@ def formatierte_attacken_ausgabe(
         werte = [f"{str(atk.get(feld, '')):<{max_breiten[feld]}}" for feld in felder]
         print(" | ".join(werte))
 
-def load_type_chart(filename="pokemon_type_chart.json"):
-    """
-    Lädt die Typen-Effektivitätstabelle aus einer JSON-Datei.
-
-    Args:
-        filename (str): Der Pfad zur JSON-Datei.
-
-    Returns:
-        dict: Das geladene Dictionary mit der Typen-Effektivitätstabelle.
-        None: Wenn die Datei nicht gefunden wurde, kein gültiges JSON enthält
-              oder ein anderer Fehler auftritt.
-    """
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            chart = json.load(f)
-        print(f"Typen-Effektivitätstabelle erfolgreich aus '{filename}' geladen.")
-        return chart
-    except FileNotFoundError:
-        print(f"Fehler: Datei '{filename}' nicht gefunden.")
-        return None
-    except json.JSONDecodeError:
-        print(f"Fehler: Datei '{filename}' enthält kein gültiges JSON.")
-        return None
-    except Exception as e:
-        print(f"Ein unerwarteter Fehler beim Lesen der Datei ist aufgetreten: {e}")
-        return None
-
-def get_effectiveness(type_chart, attack_type, defense_types):
-    """
-    Ermittelt die Effektivität einer Attacke gegen einen oder zwei Verteidiger-Typen.
-
-    Behandelt automatisch die korrekte Schlüsselbildung für Einzel- und Doppeltypen
-    (Doppeltypen werden alphabetisch sortiert für den Lookup).
-
-    Args:
-        type_chart (dict): Die geladene Typen-Effektivitätstabelle.
-        attack_type (str): Der Typ der angreifenden Attacke (z.B. "Feuer").
-        defense_types (list[str]): Eine Liste mit einem oder zwei Verteidiger-Typen
-                                   (z.B. ["Pflanze"] oder ["Pflanze", "Gift"]).
-
-    Returns:
-        float: Der Effektivitätsmultiplikator (z.B. 0.0, 0.5, 1.0, 2.0).
-        None: Wenn die Eingabe ungültig ist (z.B. falsche Anzahl an Typen,
-              ungültiger Angriffstyp) oder die Kombination nicht gefunden wurde.
-              Letzteres sollte bei korrekt generierter JSON nicht passieren.
-    """
-    if not type_chart:
-        print("Fehler: Type Chart wurde nicht korrekt geladen.")
-        return None
-
-    if not isinstance(defense_types, (list, tuple)) or not 1 <= len(defense_types) <= 2:
-        print(f"Fehler: defense_types muss eine Liste/Tuple mit 1 oder 2 Typen sein, erhalten: {defense_types}")
-        return None
-
-    # Hole das Unter-Dictionary für den Angriffstyp (sicher mit .get)
-    attacker_effectiveness_map = type_chart.get(attack_type)
-    if not attacker_effectiveness_map:
-        print(f"Fehler: Angriffstyp '{attack_type}' nicht in der Type Chart gefunden.")
-        return None
-
-    # Baue den Schlüssel für die Abfrage basierend auf der Anzahl der Verteidiger-Typen
-    lookup_key = None
-    if len(defense_types) == 1:
-        # Einzeltyp-Verteidiger: Format "Typ, None"
-        lookup_key = f"{defense_types[0]}, None"
-    elif len(defense_types) == 2:
-        # Doppeltyp-Verteidiger: Sortiere alphabetisch für das Format "TypA, TypB"
-        type1, type2 = defense_types[0], defense_types[1]
-        # Stelle sicher, dass die Typen gültig sind (optional, aber gute Praxis)
-        # if type1 not in type_chart or type2 not in type_chart: # Prüft nur, ob sie als Angreifer existieren
-        #     print(f"Warnung: Einer der Verteidiger-Typen '{type1}'/'{type2}' ist möglicherweise ungültig.")
-
-        sorted_types = sorted((type1, type2))
-        lookup_key = f"{sorted_types[0]}, {sorted_types[1]}"
-
-    # Mache den Lookup im Dictionary des Angreifers
-    effectiveness = attacker_effectiveness_map.get(lookup_key)
-
-    if effectiveness is None:
-        # Dieser Fall sollte eigentlich nicht auftreten, wenn die JSON korrekt ist
-        # und die Typnamen übereinstimmen. Wir geben trotzdem eine Meldung aus.
-        print(f"Warnung: Schlüssel '{lookup_key}' für Angreifer '{attack_type}' nicht gefunden.")
-        # Hier *könnte* man einen Fallback einbauen, aber bei korrekter JSON ist er unnötig.
-        # Die Logik oben stellt sicher, dass immer der korrekte, sortierte Schlüssel verwendet wird.
-        return None # Oder vielleicht 1.0 als Standard zurückgeben? None ist klarer bei Fehlern.
-
-    return effectiveness
-
 def determine_optimal_attack_types(type_chart: dict, opponent_team: List[Dict[str, Any]]) -> List[str]:
     # Hier gehen wir davon aus, dass type_chart ein Dictionary ist, in dem für jeden Angriffstyp die
     # Effektivitätswerte gegenüber einzelnen Verteidiger-Typen hinterlegt sind.
@@ -460,7 +372,7 @@ def determine_optimal_attack_types(type_chart: dict, opponent_team: List[Dict[st
             # Für jedes Gegner-Pokémon holen wir dessen Verteidigungstypen (als Liste)
             defense_types = opp.get('types', [])
             # get_effectiveness liefert uns den Multiplikator für den Angriffstyp gegen die Verteidigungstypen
-            eff = get_effectiveness(type_chart, atk_type, defense_types)
+            eff = type_effectiveness.get_effectiveness(type_chart, atk_type, defense_types)
             if eff is None:
                 eff = 1.0  # Standard, falls kein Wert gefunden wird
             total_multiplier += eff
@@ -482,13 +394,13 @@ gegner_team_daten = []
 aktive_filter_funktion = filter_funktion_error # Behalte die ursprüngliche Funktion
 
 # Hole Pokémon-Team des Trainers
-gegner_team_liste = get_team_from_trainer(trainer_name)
+gegner_team_liste = get_team_from_trainer_from_wiki(trainer_name)
 
 if gegner_team_liste:
     print(f"🎯 Gegner-Team von {trainer_name} (SW) gefunden:")
     # Liste der Gegner-Pokémon mit Typen ausgeben
     for name, level in gegner_team_liste:
-        typen = get_pokemon_typen(name)
+        typen = get_pokemon_typen_from_wiki(name)
         typen_str = "/".join(typen) if typen else "Typ unbekannt"
         level_str = f"Lv. {level}" if isinstance(level, int) else f"Lv. {level}" # Handle '?' Level
         print(f"- {name} ({typen_str}) {level_str}")
@@ -520,7 +432,7 @@ else:
 
 # --- Teamanalyse mit Typ-Effektivität ---
 
-type_chart = load_type_chart("pokemon_type_chart.json")
+type_chart = type_effectiveness.load_type_chart("pokemon_type_chart.json")
 optimal_attack_types = determine_optimal_attack_types(type_chart, gegner_team_daten)
 
 if optimal_attack_types:
@@ -544,7 +456,7 @@ for opp in gegner_team_daten:
     best_multiplier = 0.0
     best_types = []
     for atk_type in attack_types:
-        eff = get_effectiveness(type_chart, atk_type, opp.get('types', []))
+        eff = type_effectiveness.get_effectiveness(type_chart, atk_type, opp.get('types', []))
         if eff is None:
             eff = 1.0  # Standardwert, falls kein Wert vorhanden ist
         if eff > best_multiplier:
@@ -563,12 +475,12 @@ pokemon_daten_eigen = []
 if list_available_pokemon: # Nur ausführen, wenn die Liste nicht leer ist
     for pokemon_name, max_level_individuell in list_available_pokemon:
         level_cap = max_level_individuell if nutze_individuellen_level else global_level_cap
-        pokemon_typen = get_pokemon_typen(pokemon_name)
+        pokemon_typen = get_pokemon_typen_from_wiki(pokemon_name)
         typen_str = "/".join(pokemon_typen) if pokemon_typen else "Typ unbekannt"
 
         print(f"\n\n==================== {pokemon_name} ({typen_str}) (bis Level {level_cap}) ====================")
 
-        attacken = get_attacken_gen8_structured(pokemon_name, level_cap)
+        attacken = get_attacken_gen8_structured_from_wiki(pokemon_name, level_cap)
         pokemon_daten_eigen.append({
             'name': pokemon_name,
             'level_cap': level_cap,
