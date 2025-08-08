@@ -3,7 +3,7 @@ from tkinter import ttk
 import os
 
 import global_infos
-from type_effectiveness import load_type_chart, get_type_matchups
+from type_effectiveness import load_type_effectiveness_data, get_type_matchups
 
 EFFECT_GROUPS = [0.0, 0.25, 0.5, 1.0, 2.0, 4.0]
 EFFECT_LABELS = ["0×", "¼×", "½×", "1×", "2×", "4×"]
@@ -16,7 +16,7 @@ class TypeEffectivenessApp:
         self.root = root
         self.root.title("Pokémon Typen-Effektivität")
 
-        self.type_chart = load_type_chart()
+        self.type_chart = load_type_effectiveness_data()
         self.selected_types = []
 
         self.tk_images = {}

@@ -1,0 +1,33 @@
+{
+  "Maxax": {
+    "Typen": ["Drache"],
+    "Entwicklungen": {
+      "Vorentwicklung1": "Milza",
+      "Level1": 38,
+      "Vorentwicklung2": "Sharfax",
+      "Level2": 48
+    },
+    "Faehigkeiten": ["Rivalität", "Überbrückung"],
+    "VersteckteFaehigkeit": "Anspannung",
+    "Statuswerte": {
+      "KP": 76,
+      "Angriff": 147,
+      "Verteidigung": 90,
+      "SpAngriff": 60,
+      "SpVerteidigung": 70,
+      "Initiative": 97
+    },
+    "Fangrate": 45,
+    "Fundorte": {
+      "Schwert": ["Milza-See (Auge)", "Wutanfall-See", "Raid-Nester"],
+      "Schild": ["Wutanfall-See", "Raid-Nester"]
+    },
+    "Attacken": {
+      "LevelUp": ["Drachenwut", "Doppelhieb", "Schwerttanz"],
+      "TM": ["Erdbeben", "Schlitzer"],
+      "Ei": [],
+      "Tutor": []
+    },
+    "EiGruppen": ["Drache", "Monster"]
+  }
+}

@@ -1,7 +1,7 @@
 import json
 import global_infos
 
-def load_type_chart(filename="pokemon_type_chart.json"):
+def load_type_effectiveness_data(filename="information_storage/pokemon_type_effectiveness.json"):
     """
     Lädt die Typen-Effektivitätstabelle aus einer JSON-Datei.
 

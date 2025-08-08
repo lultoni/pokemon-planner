@@ -4,7 +4,7 @@ import type_effectiveness
 # --- Hauptlogik ---
 
 # Laden der Typentabelle
-type_chart = type_effectiveness.load_type_chart()
+type_chart = type_effectiveness.load_type_effectiveness_data()
 
 # TODO remove this and replace it with a global infos check
 # Liste der verteidigenden Pokémon (Name, Typen-Tupel)

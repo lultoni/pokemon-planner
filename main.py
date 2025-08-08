@@ -405,7 +405,7 @@ else:
 
 # --- Teamanalyse mit Typ-Effektivität ---
 
-type_chart = type_effectiveness.load_type_chart("pokemon_type_chart.json")
+type_chart = type_effectiveness.load_type_effectiveness_data("information_storage/pokemon_type_effectiveness.json")
 optimal_attack_types = determine_optimal_attack_types(type_chart, gegner_team_daten)
 
 if optimal_attack_types:

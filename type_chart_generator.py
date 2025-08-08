@@ -75,7 +75,7 @@ for attacker_type in pokemon_typen:
     full_type_chart[attacker_type] = defending_effectiveness
 
 # --- Speichere die Tabelle als JSON-Datei ---
-output_filename = "pokemon_type_chart.json"
+output_filename = "information_storage/pokemon_type_effectiveness.json"
 try:
     with open(output_filename, 'w', encoding='utf-8') as f:
         # json.dump schreibt das Python-Dictionary in die Datei
