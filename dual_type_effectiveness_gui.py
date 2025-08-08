@@ -17,13 +17,13 @@ class TypeEffectivenessApp:
         self.root.title("Pokémon Typen-Effektivität")
 
         self.type_chart = load_type_chart()
-        self.selected_types = [None, None]
+        self.selected_types = []
 
         self.tk_images = {}
         self.inactive_tk_images = {}
         self.load_type_icons()
 
-        self.type_buttons = [{}, {}]
+        self.type_buttons = {}
         self.result_labels = {}
 
         self.selected_display_labels = []
@@ -39,7 +39,7 @@ class TypeEffectivenessApp:
             faded_path = os.path.join(ICON_FOLDER, ICON_FILENAME_PATTERN.format(typ=typ).replace(".png", "_faded.png"))
             try:
                 self.tk_images[typ] = tk.PhotoImage(file=normal_path)
-                self.inactive_tk_images[typ] = tk.PhotoImage(file=normal_path) # TODO CHANGE TO faded_path after tweaking the images!
+                self.inactive_tk_images[typ] = tk.PhotoImage(file=faded_path)  # TODO: faded_path nach Bildanpassung verwenden
             except Exception as e:
                 print(f"Fehler beim Laden der Icons für {typ}: {e}")
                 self.tk_images[typ] = None
@@ -49,27 +49,18 @@ class TypeEffectivenessApp:
         frame = ttk.LabelFrame(self.root, text="Typen auswählen")
         frame.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.type_frames = []
-        for idx in range(2):
-            subframe = tk.Frame(frame)
-            subframe.grid(row=1, column=idx, padx=(20 if idx == 1 else 0), pady=5)
-            self.type_frames.append(subframe)
+        for i, typ in enumerate(global_infos.pokemon_types):
+            row = i % 6
+            col = i // 6
+            image = self.tk_images.get(typ)
+            faded = self.inactive_tk_images.get(typ)
+            if not image or not faded:
+                continue
 
-            label = ttk.Label(subframe, text=f"Typ {idx + 1}", font=('Arial', 11, 'bold'))
-            label.grid(row=0, column=0, columnspan=3, pady=(0, 5))
-
-            for i, typ in enumerate(global_infos.pokemon_types):
-                row = i % 6 + 1
-                col = i // 6
-                image = self.tk_images.get(typ)
-                faded = self.inactive_tk_images.get(typ)
-                if not image or not faded:
-                    continue
-
-                btn = tk.Button(subframe, image=faded, relief="flat", bd=1, cursor="hand2", bg="white")
-                btn.grid(row=row, column=col, padx=2, pady=2)
-                btn.config(command=lambda b=btn, index=idx, t=typ: self.select_type(b, index, t))
-                self.type_buttons[idx][typ] = btn
+            btn = tk.Button(frame, image=faded, relief="flat", bd=1, cursor="hand2", bg="white")
+            btn.grid(row=row + 1, column=col, padx=2, pady=2)
+            btn.config(command=lambda b=btn, t=typ: self.toggle_type(t))
+            self.type_buttons[typ] = btn
 
     def setup_selected_display(self):
         frame = ttk.LabelFrame(self.root, text="Ausgewählte Typen")
@@ -79,7 +70,7 @@ class TypeEffectivenessApp:
         self.selected_icon_labels = []
 
         for i in range(2):
-            lbl = ttk.Label(frame, text=f"Typ {i + 1}:")
+            lbl = ttk.Label(frame, text="")
             lbl.grid(row=0, column=i * 2, padx=10)
             icon = tk.Label(frame)
             icon.grid(row=0, column=i * 2 + 1)
@@ -95,44 +86,41 @@ class TypeEffectivenessApp:
             header.grid(row=0, column=col, padx=10, pady=5)
             self.result_labels[label] = []
 
-    def select_type(self, button, type_index, typ):
-        current = self.selected_types[type_index]
-        if current == typ and type_index == 1:
-            self.selected_types[type_index] = None
+    def toggle_type(self, typ):
+        if typ in self.selected_types:
+            self.selected_types.remove(typ)
         else:
-            self.selected_types[type_index] = typ
+            if len(self.selected_types) < 2:
+                self.selected_types.append(typ)
+            else:
+                # Optional: Ersetze den 2. Typ mit dem neuen, wenn du willst
+                self.selected_types[0] = self.selected_types[1]
+                self.selected_types[1] = typ
 
         self.update_buttons()
         self.update_table()
         self.update_selected_icons()
 
     def update_buttons(self):
-        for type_index in [0, 1]:
-            for typ, btn in self.type_buttons[type_index].items():
-                selected = self.selected_types[type_index] == typ
-                image = self.tk_images[typ] if selected else self.inactive_tk_images[typ]
-                btn.config(image=image)
-                btn.image = image
-                btn.config(bg="#d0f0ff" if selected else "white", relief="sunken" if selected else "flat")
+        for typ, btn in self.type_buttons.items():
+            selected = typ in self.selected_types
+            image = self.tk_images[typ] if selected else self.inactive_tk_images[typ]
+            btn.config(image=image)
+            btn.image = image
+            btn.config(bg="#d0f0ff" if selected else "white", relief="sunken" if selected else "flat")
 
     def update_selected_icons(self):
         # Zwischenzeile komplett leeren
-        for i in [0, 1]:
+        for i in range(2):
             self.selected_display_labels[i].config(text="")
             self.selected_icon_labels[i].config(image=tk.PhotoImage(file="type_icons/empty.png"), text="")
             self.selected_icon_labels[i].image = tk.PhotoImage(file="type_icons/empty.png")
 
-        # Typ 1 ist immer vorhanden und wird angezeigt
-        if self.selected_types[0]:
-            self.selected_display_labels[0].config(text="Typ 1:")
-            self.selected_icon_labels[0].config(image=self.tk_images[self.selected_types[0]])
-            self.selected_icon_labels[0].image = self.tk_images[self.selected_types[0]]
-
-        # Typ 2 nur anzeigen, wenn gesetzt
-        if self.selected_types[1]:
-            self.selected_display_labels[1].config(text="Typ 2:")
-            self.selected_icon_labels[1].config(image=self.tk_images[self.selected_types[1]])
-            self.selected_icon_labels[1].image = self.tk_images[self.selected_types[1]]
+        # Nur die tatsächlich ausgewählten Typen anzeigen
+        for i, typ in enumerate(self.selected_types):
+            self.selected_display_labels[i].config(text=f"Typ {i+1}:")
+            self.selected_icon_labels[i].config(image=self.tk_images[typ])
+            self.selected_icon_labels[i].image = self.tk_images[typ]
 
     def update_table(self):
         for label_list in self.result_labels.values():
@@ -140,12 +128,10 @@ class TypeEffectivenessApp:
                 widget.destroy()
             label_list.clear()
 
-        if self.selected_types[0] is None:
+        if not self.selected_types:
             return
 
-        defense = [self.selected_types[0]]
-        if self.selected_types[1]:
-            defense.append(self.selected_types[1])
+        defense = self.selected_types
 
         matchups = get_type_matchups(self.type_chart, defense)
 
