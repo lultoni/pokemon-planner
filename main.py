@@ -4,40 +4,13 @@ import re
 from collections import defaultdict
 from typing import List, Dict, Any, Optional, Callable, Tuple
 from bs4 import BeautifulSoup
+
+import global_infos
 import type_effectiveness
 
 # --------------- GLOBAL VARS ---------------
-
-list_available_pokemon = (
-    ("Vulnona", 64),
-    ("Rexblisar", 60),
-    ("Flunschlik", 58),
-    ("Golgantes", 65),
-    ("Strepoli", 61),
-    ("Piondragi", 48),
-    ("Intelleon", 60),
-    ("Psiaugon", 57),
-    ("Smogon", 35),
-    ("Schalellos", 35),
-    ("Olangaar", 60),
-    ("Maritellit", 42),
-    ("Barrakiefa", 34),
-    ("Garados", 53),
-    ("Irokex", 32),
-    ("Salanga", 35),
-    ("Schlaraffel", 36),
-    ("Laukaps", 46),
-    ("Bronzong", 41),
-    ("Snomnom", 44),
-    ("Keifel", 45),
-    ("Wailmer", 45),
-    ("Kingler", 43),
-    ("Rizeros", 46),
-)
-
 fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
 global_level_cap = 70
-nutze_individuellen_level = False
 grouping_key = "Art"
 minimum_strength_move = 70
 ALLOW_TP_MOVES = False
@@ -468,13 +441,13 @@ for opp in gegner_team_daten:
     print(f"- Gegen {opp['name']} ({opp_types}): optimale Angriffstypen: {best_types} (Effektivität: {best_multiplier})")
 
 # 2. Eigene Pokémon-Liste analysieren (falls definiert und nicht überschrieben)
-print("--- Analyse EIGENER Pokémon (aus list_available_pokemon) ---")
+print("--- Analyse EIGENER Pokémon (aus global_infos.owned_pokemon_list) ---")
 alle_eigenen_erfuellen_kriterium = True
 pokemon_daten_eigen = []
 
-if list_available_pokemon: # Nur ausführen, wenn die Liste nicht leer ist
-    for pokemon_name, max_level_individuell in list_available_pokemon:
-        level_cap = max_level_individuell if nutze_individuellen_level else global_level_cap
+if global_infos.owned_pokemon_list: # Nur ausführen, wenn die Liste nicht leer ist
+    for pokemon_name in global_infos.owned_pokemon_list:
+        level_cap = global_level_cap
         pokemon_typen = get_pokemon_typen_from_wiki(pokemon_name)
         typen_str = "/".join(pokemon_typen) if pokemon_typen else "Typ unbekannt"
 
@@ -500,15 +473,15 @@ if list_available_pokemon: # Nur ausführen, wenn die Liste nicht leer ist
                 print(f"\n== {grouping_key}: {gruppen_name} ==")
                 formatierte_attacken_ausgabe(liste, fields_per_move)
 else:
-    print("Keine eigenen Pokémon in 'list_available_pokemon' definiert.")
+    print("Keine eigenen Pokémon in 'global_infos.owned_pokemon_list' definiert.")
     alle_eigenen_erfuellen_kriterium = True # Oder False? Hängt von der Logik ab. Sagen wir True, wenn Liste leer.
 
 # Zusammenfassung für eigene Pokémon
 print("\n----------------------------------------------")
-if not list_available_pokemon:
+if not global_infos.owned_pokemon_list:
     print("ℹ️ Keine eigenen Pokémon analysiert.")
 elif alle_eigenen_erfuellen_kriterium:
-    print(f"✅ Alle eigenen Pokémon ({len(list_available_pokemon)}) scheinen mindestens eine passende Attacke gemäß Filter zu haben.")
+    print(f"✅ Alle eigenen Pokémon ({len(global_infos.owned_pokemon_list)}) scheinen mindestens eine passende Attacke gemäß Filter zu haben.")
 else:
     print(f"❌ Mindestens ein eigenes Pokémon hat KEINE passende Attacke gemäß Filter.")
 print("----------------------------------------------\n")
@@ -523,7 +496,7 @@ print("==============================================")
 # eigene Pokémon als auch das (gefundene oder angenommene) Gegnerteam berücksichtigt.
 
 # Beispielhafte einfache Zusammenfassung basierend auf dem ursprünglichen Skript-Ziel:
-if not list_available_pokemon:
+if not global_infos.owned_pokemon_list:
     pass # Bereits oben behandelt
 elif alle_eigenen_erfuellen_kriterium:
     print("✅ Alle EIGENEN Pokémon scheinen (basierend auf dem initialen Filter) passende Attacken zu haben.")

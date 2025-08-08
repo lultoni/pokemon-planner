@@ -6,6 +6,7 @@ import type_effectiveness
 # Laden der Typentabelle
 type_chart = type_effectiveness.load_type_chart()
 
+# TODO remove this and replace it with a global infos check
 # Liste der verteidigenden Pokémon (Name, Typen-Tupel)
 name_liste = (
     ("Vulnona", ("Feuer",)),
@@ -34,6 +35,7 @@ name_liste = (
     ("Rizeros", ("Boden", "Gestein")),
 )
 
+# TODO replace this with an access to fight data
 # Liste der angreifenden Pokémon (Name, Attacken-Typen-Tupel)
 attack_list = (
     ("Durengard", ("Geist", "Kampf", "Stahl")),
