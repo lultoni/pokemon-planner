@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import requests
 import re
 import json
@@ -10,9 +12,24 @@ def fetch_raw_wikitext(pokemon_name: str) -> Optional[str]:
     try:
         response = requests.get(url)
         response.raise_for_status()
+
         match = re.search(r'<textarea[^>]+id="wpTextbox1"[^>]*>(.*?)</textarea>', response.text, re.DOTALL)
         if match:
-            return match.group(1)
+            wikitext = match.group(1)
+
+            # Suche nach der Überschrift "Typ-Schwächen"
+            typ_schwaechen_pattern = r"=== Typ-Schwächen ==="
+            typ_schwaechen_match = re.search(typ_schwaechen_pattern, wikitext)
+
+            if typ_schwaechen_match:
+                # Schneide den Text ab, bevor die Überschrift "Typ-Schwächen" beginnt
+                cut_wikitext = wikitext[:typ_schwaechen_match.start()]
+                print("✅ Wikitext für Typ-Extraktion erfolgreich gekürzt.")
+                return cut_wikitext
+
+            print("✅ Wikitext gefunden, aber keine 'Typ-Schwächen'-Sektion. Rückgabe des vollständigen Textes.")
+            return wikitext
+
         print(f"❌ Kein Wikitext für {pokemon_name} gefunden.")
     except Exception as e:
         print(f"❌ Fehler beim Abrufen von {pokemon_name}: {e}")
@@ -20,9 +37,15 @@ def fetch_raw_wikitext(pokemon_name: str) -> Optional[str]:
 
 
 def extract_value(text: str, key: str) -> Optional[str]:
-    match = re.search(rf"\|{key}=([^\|\n}]+)", text)
+    escaped_key = re.escape(key)
+    pattern = rf"\|{escaped_key}(?!_)=([^|\n}}]+)"
+
+    match = re.search(pattern, text)
     if match:
-        return match.group(1).strip().replace("[[", "").replace("]]", "")
+        raw_value = match.group(1)
+        cleaned_value = raw_value.strip().replace("[[", "").replace("]]", "")
+        return cleaned_value
+    print(f"DEBUG: Key '{key}' not found.")
     return None
 
 
@@ -61,12 +84,24 @@ def extract_entwicklungen(text: str) -> Dict[str, str]:
 
 
 def extract_typen(text: str) -> List[str]:
-    typ1 = extract_value(text, "Typ")
-    typ2 = extract_value(text, "Typ2")
+    def clean(val: Optional[str]) -> Optional[str]:
+        if val:
+            return val.strip().replace("[[", "").replace("]]", "")
+        return None
+
+    form_zusatz = extract_value(text, "Typ2Zusatz_a") or extract_value(text, "TypZusatz_a")
+
+    if form_zusatz and "Galar" in form_zusatz:
+        form_typ = clean(extract_value(text, "Typ_a"))
+        form_typ2 = clean(extract_value(text, "Typ2_a"))
+        return [t for t in [form_typ, form_typ2] if t]
+
+    typ1 = clean(extract_value(text, "Typ"))
+    typ2 = clean(extract_value(text, "Typ2"))
     return [t for t in [typ1, typ2] if t]
 
 
-def extract_faehigkeiten(text: str) -> Dict[str, List[str] | str]:
+def extract_faehigkeiten(text: str) -> Dict[str, List[str] | str]: # todo test
     f1 = extract_value(text, "Fähigkeit")
     f2 = extract_value(text, "Fähigkeit2")
     vf = extract_value(text, "VF")
@@ -76,18 +111,18 @@ def extract_faehigkeiten(text: str) -> Dict[str, List[str] | str]:
     }
 
 
-def extract_fangrate(text: str) -> int:
+def extract_fangrate(text: str) -> int: # todo test
     val = extract_value(text, "Fangrate")
     return int(val) if val and val.isdigit() else 0
 
 
-def extract_eigruppen(text: str) -> List[str]:
+def extract_eigruppen(text: str) -> List[str]: # todo test
     g1 = extract_value(text, "Ei-Gruppe")
     g2 = extract_value(text, "Ei-Gruppe2")
     return [g for g in [g1, g2] if g]
 
 
-def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]:
+def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]: # todo test
     text = fetch_raw_wikitext(pokemon_name)
     if not text:
         return None
@@ -106,8 +141,8 @@ def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]:
         "VersteckteFaehigkeit": faehigkeiten["VersteckteFaehigkeit"],
         "Statuswerte": statuswerte,
         "Fangrate": fangrate,
-        "Fundorte": {},  # wird später ergänzt
-        "Attacken": {
+        "Fundorte": {}, # todo append with function
+        "Attacken": { # todo append with function
             "LevelUp": [],
             "TM": [],
             "Ei": [],
@@ -117,7 +152,7 @@ def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]:
     }
 
 
-def save_to_cache(pokemon_name: str, data: Dict, filename: str = "pokemon_cache.json"):
+def save_to_cache(pokemon_name: str, data: Dict, filename: str = "information_storage/pokemon_knowledge_cache.json"):
     if os.path.exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
             cache = json.load(f)
@@ -127,12 +162,12 @@ def save_to_cache(pokemon_name: str, data: Dict, filename: str = "pokemon_cache.
     cache[pokemon_name] = data
 
     with open(filename, "w", encoding="utf-8") as f:
-        json.dump(cache, f, indent=2, ensure_ascii=False)
+        json.dump(cache, f, indent=4, ensure_ascii=False)
     print(f"✅ {pokemon_name} wurde gespeichert.")
 
 
 def main():
-    poki_name = "Maxax"
+    poki_name = "Vulnona"
     entry = build_pokemon_entry(poki_name)
     if entry:
         save_to_cache(poki_name, entry)
