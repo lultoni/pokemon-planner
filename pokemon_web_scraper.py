@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import html
+
 import requests
 import re
 import json
 import os
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 
 
 def fetch_raw_wikitext(pokemon_name: str) -> Optional[str]:
@@ -46,7 +48,6 @@ def extract_value(text: str, key: str) -> Optional[str]:
         return cleaned_value
     return None
 
-
 def extract_statuswerte(text: str, pokemon_name: str) -> Dict[str, int]:
     """
     Extrahiert Statuswerte für das angegebene Pokémon.
@@ -80,7 +81,7 @@ def extract_statuswerte(text: str, pokemon_name: str) -> Dict[str, int]:
 
     # Fallback: erster Statuswerte-Block im Text
     if not match:
-        match = re.search(r"\{\{Statuswerte.*?\n\}\}", text, re.DOTALL)
+        match = re.search(r"\{\{Statuswerte.*?\n}}", text, re.DOTALL)
 
     if not match:
         return {}  # Kein Block gefunden
@@ -97,19 +98,60 @@ def extract_statuswerte(text: str, pokemon_name: str) -> Dict[str, int]:
     return result
 
 
-def extract_entwicklungen(text: str) -> Dict[str, str]: # todo test
-    entwicklungen = {}
-    match1 = re.search(r'Stufe1\|(\d+)\|.*?\[\[([^\]]+)\]\]', text)
-    match2 = re.search(r'Stufe2\|(\d+)\|.*?Level[^0-9]*(\d+)', text)
-    match3 = re.search(r'Stufe3\|(\d+)\|.*?Level[^0-9]*(\d+)', text)
+def extract_entwicklungen(text: str, id_to_name: Dict[str, str]) -> List[Dict[str, str]]:
+    """
+    Extrahiert Entwicklungsstufen aus 'Zucht, Entwicklung und Formen'.
+    Gibt eine Liste von Entwicklungsinfos in Reihenfolge zurück.
+    """
+    entwicklungen = []
 
-    if match1:
-        entwicklungen["Vorentwicklung1"] = match1.group(2)
-    if match2:
-        entwicklungen["Vorentwicklung2"] = "Sharfax"  # Pokéwiki gibt den Namen nicht nochmal an
-        entwicklungen["Level1"] = int(match2.group(2))
-    if match3:
-        entwicklungen["Level2"] = int(match3.group(2))
+    # Muster für jede Stufe
+    pattern = re.compile(
+        r"\{\{Zucht, Entwicklung und Formen/Stufe(?P<stufe>[123])\|(?P<id>[\d\w]+)\|Methode=(?P<methode>.*?)\}\}",
+        re.DOTALL
+    )
+
+    for match in pattern.finditer(text):
+        stufe = int(match.group("stufe"))
+        poke_id = match.group("id")
+        methode = match.group("methode").replace("\n", " ").strip()
+
+        if id_to_name:
+            name = id_to_name.get(poke_id, f"ID_{poke_id}")
+        else:
+            name = "None"
+
+        # Level extrahieren
+        level_match = re.search(r"Level(?:[^0-9]|&nbsp;)*(\d+)", methode)
+        level = int(level_match.group(1)) if level_match else None
+
+        # Item extrahieren (z. B. Feuerstein, Eisstein)
+        item_match = re.search(r"\[\[([^\]]+stein)\]\]", methode, re.IGNORECASE)
+        item = item_match.group(1) if item_match else None
+
+        # Zeitbedingungen
+        zeit_match = re.search(r"nachts|tagsüber", methode, re.IGNORECASE)
+        zeit = zeit_match.group(0) if zeit_match else None
+
+        # Region extrahieren
+        region_match = re.search(r"in\s+\[\[([^\]]+)\]\]", methode)
+        region = region_match.group(1) if region_match else None
+
+        # Generation extrahieren
+        gen_match = re.search(r"Gen\.\s*\{\{G\|(\d+)\}\}", methode)
+        generation = int(gen_match.group(1)) if gen_match else None
+
+        entwicklungen.append({
+            "Stufe": stufe,
+            "ID": poke_id,
+            "Name": name,
+            "Level": level,
+            "Item": item,
+            "Zeit": zeit,
+            "Region": region,
+            "Generation": generation,
+            "Methode": methode
+        })
 
     return entwicklungen
 
@@ -132,13 +174,103 @@ def extract_typen(text: str) -> List[str]:
     return [t for t in [typ1, typ2] if t]
 
 
-def extract_faehigkeiten(text: str) -> Dict[str, List[str] | str]: # todo test
-    f1 = extract_value(text, "Fähigkeit")
-    f2 = extract_value(text, "Fähigkeit2")
-    vf = extract_value(text, "VF")
+def _parse_form_field(raw: str) -> List[Tuple[str, List[str]]]:
+    """
+    Zerlegt z.B.
+    '[[Schneemantel]] <sup>(Alola)</sup><br>[[Schneeschauer]] <sup>(VF Alola)</sup>'
+    oder 'Wutausbruch &lt;small>(Galar)&lt;/small>'
+    in eine Liste von (Fähigkeitsname, [Annotationen]).
+    """
+    if not raw:
+        return []
+    s = html.unescape(raw)                       # &lt; -> < etc.
+    s = re.sub(r'(?i)<br\s*/?>', '\n', s)        # <br> → newline
+    parts = re.split(r'\n|\*', s)                # newline und * als Trenner
+    res: List[Tuple[str, List[str]]] = []
+
+    for p in parts:
+        p = p.strip()
+        if not p:
+            continue
+
+        # Name: zuerst versuchen [[Link|Anzeigename]] oder [[Name]]
+        m = re.search(r'\[\[([^\]\|]+)(?:\|([^\]]+))?\]\]', p)
+        if m:
+            name = m.group(2) if m.group(2) else m.group(1)
+        else:
+            # Plain-Text: bis zu erstem '<' oder '(' oder Ende
+            name = re.split(r'\s*(?:<|\(|$)', p)[0].strip()
+
+        # Annotations sammeln:
+        annotations: List[str] = []
+        # Parentheses z.B. (Galar) oder (VF Alola)
+        annotations += re.findall(r'\(([^)]+)\)', p)
+        # Tags wie <small>..</small> oder <sup>..</sup>
+        tag_matches = re.findall(r'<(?:small|sup)[^>]*>(.*?)</(?:small|sup)>', p, flags=re.I|re.S)
+        for t in tag_matches:
+            tclean = t.strip().strip('() ')
+            if tclean:
+                annotations.append(tclean)
+
+        # dedupe + strip
+        annotations = [a.strip() for a in dict.fromkeys(annotations) if a.strip()]
+        res.append((name, annotations))
+
+    return res
+
+
+def extract_faehigkeiten(text: str, pokemon_name: str) -> Dict[str, List[str] | str]:
+    """
+    Gibt { "Faehigkeiten": [...], "VersteckteFaehigkeit": "..." } zurück.
+    Wenn pokemon_name eine Region enthält (z.B. "Galar-Zigzachs"), werden
+    bevorzugt Regionen-Fähigkeiten genutzt (falls vorhanden).
+    """
+    # Region erkennen (z.B. "Galar" aus "Galar-Zigzachs")
+    region: Optional[str] = None
+    if "-" in pokemon_name:
+        region = pokemon_name.split("-", 1)[0].strip()
+
+    # Basis-Felder (extrahiert mit deinem bestehenden extract_value; unescape zur Sicherheit)
+    base_f1 = extract_value(text, "Fähigkeit") or ""
+    base_f2 = extract_value(text, "Fähigkeit2") or ""
+    base_vf = extract_value(text, "VF") or ""
+    base_f1 = html.unescape(base_f1).strip()
+    base_f2 = html.unescape(base_f2).strip()
+    base_vf = html.unescape(base_vf).strip()
+
+    # Form-Feld roh holen und parsen
+    raw_form = extract_value(text, "FähigkeitForm")
+    parsed = _parse_form_field(raw_form or "")
+
+    # Wenn Region gesetzt: wähle nur Einträge, deren Annotation die Region enthält
+    if region and parsed:
+        reg = region.lower()
+        reg_non_vf = [name for name, anns in parsed if any(reg in a.lower() and 'vf' not in a.lower() for a in anns)]
+        reg_vf = next((name for name, anns in parsed if any(reg in a.lower() and 'vf' in a.lower() for a in anns)), None)
+
+        if reg_non_vf or reg_vf:
+            return {
+                "Faehigkeiten": reg_non_vf,
+                "VersteckteFaehigkeit": reg_vf or base_vf
+            }
+
+    # Kein Region-Match (oder keine Region angegeben)
+    if parsed:
+        # Wenn kein Region-Filter angewendet wurde: gib alle form-abhängigen Fähigkeiten zurück,
+        # wobei VF-Eintrag (falls vorhanden) separiert wird.
+        non_vf = [name for name, anns in parsed if not any('vf' in a.lower() for a in anns)]
+        vf_name = next((name for name, anns in parsed if any('vf' in a.lower() for a in anns)), None)
+        if non_vf or vf_name:
+            return {
+                "Faehigkeiten": non_vf,
+                "VersteckteFaehigkeit": vf_name or base_vf
+            }
+
+    # Fallback: Basis-Fähigkeiten zurückgeben
+    fae = [f for f in [base_f1, base_f2] if f]
     return {
-        "Faehigkeiten": [f for f in [f1, f2] if f],
-        "VersteckteFaehigkeit": vf or ""
+        "Faehigkeiten": fae,
+        "VersteckteFaehigkeit": base_vf or ""
     }
 
 
@@ -159,8 +291,8 @@ def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]: # todo test
         return None
 
     typen = extract_typen(text)
-    entwicklungen = extract_entwicklungen(text)
-    faehigkeiten = extract_faehigkeiten(text)
+    entwicklungen = extract_entwicklungen(text, None)
+    faehigkeiten = extract_faehigkeiten(text, pokemon_name)
     statuswerte = extract_statuswerte(text, pokemon_name)
     fangrate = extract_fangrate(text)
     eigruppen = extract_eigruppen(text)
@@ -198,7 +330,7 @@ def save_to_cache(pokemon_name: str, data: Dict, filename: str = "information_st
 
 
 def main():
-    poki_name = "Zigzachs"
+    poki_name = "Lavados"
     entry = build_pokemon_entry(poki_name)
     if entry:
         save_to_cache(poki_name, entry)

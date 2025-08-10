@@ -1,29 +1,23 @@
 {
-    "Zigzachs": {
+    "Lavados": {
         "Typen": [
             "Unlicht",
-            "Normal"
+            "Flug"
         ],
-        "Entwicklungen": {
-            "Vorentwicklung1": "Zucht",
-            "Vorentwicklung2": "Sharfax",
-            "Level1": 20,
-            "Level2": 35
-        },
+        "Entwicklungen": [],
         "Faehigkeiten": [
-            "Mitnahme",
-            "Völlerei"
+            "Wutausbruch"
         ],
-        "VersteckteFaehigkeit": "Rasanz",
+        "VersteckteFaehigkeit": "Flammkörper",
         "Statuswerte": {
-            "KP": 38,
-            "Angriff": 30,
-            "Verteidigung": 41,
-            "SpAngriff": 30,
-            "SpVerteidigung": 41,
-            "Initiative": 60
+            "KP": 90,
+            "Angriff": 100,
+            "Verteidigung": 90,
+            "SpAngriff": 125,
+            "SpVerteidigung": 85,
+            "Initiative": 90
         },
-        "Fangrate": 255,
+        "Fangrate": 3,
         "Fundorte": {},
         "Attacken": {
             "LevelUp": [],
@@ -32,7 +26,7 @@
             "Tutor": []
         },
         "EiGruppen": [
-            "Feld"
+            "Unbekannt"
         ]
     }
 }
