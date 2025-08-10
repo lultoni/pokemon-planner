@@ -290,111 +290,6 @@
                     "Name": "Magieflamme"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "01",
-                    "Name": "Bodyslam"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "02",
-                    "Name": "Flammenwurf"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "12",
-                    "Name": "Agilität"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "15",
-                    "Name": "Feuersturm"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "25",
-                    "Name": "Psychoschock"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "30",
-                    "Name": "Zugabe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "31",
-                    "Name": "Eisenschweif"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "33",
-                    "Name": "Spukball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "36",
-                    "Name": "Hitzewelle"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "43",
-                    "Name": "Hitzekoller"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "49",
-                    "Name": "Gedankengut"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "55",
-                    "Name": "Flammenblitz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "58",
-                    "Name": "Finsteraura"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "65",
-                    "Name": "Energieball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "68",
-                    "Name": "Ränkeschmied"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "69",
-                    "Name": "Zen-Kopfstoß"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "81",
-                    "Name": "Schmarotzer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "82",
-                    "Name": "Kraftvorrat"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "05",
                     "Name": "Brüller"
@@ -573,6 +468,113 @@
                     "Art": "TM",
                     "Nummer": "89",
                     "Name": "Nebelfeld"
+                }
+            ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "02",
+                    "Name": "Flammenwurf"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "12",
+                    "Name": "Agilität"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "15",
+                    "Name": "Feuersturm"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "25",
+                    "Name": "Psychoschock"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "30",
+                    "Name": "Zugabe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "31",
+                    "Name": "Eisenschweif"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "33",
+                    "Name": "Spukball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "36",
+                    "Name": "Hitzewelle"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "43",
+                    "Name": "Hitzekoller"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "49",
+                    "Name": "Gedankengut"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "55",
+                    "Name": "Flammenblitz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "58",
+                    "Name": "Finsteraura"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "65",
+                    "Name": "Energieball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "68",
+                    "Name": "Ränkeschmied"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "69",
+                    "Name": "Zen-Kopfstoß"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "81",
+                    "Name": "Schmarotzer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "82",
+                    "Name": "Kraftvorrat"
                 },
                 {
                     "Art": "TP",
@@ -591,18 +593,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=9",
-                "Meisterung=14",
-                "Meisterung=18",
-                "Meisterung=25",
-                "Meisterung=31",
-                "Meisterung=40",
-                "Meisterung=48",
-                "Meisterung=59",
-                "SWEX",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Feld"
@@ -866,86 +857,6 @@
                     "Name": "Fruststampfer"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "00",
-                    "Name": "Schwerttanz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "05",
-                    "Name": "Eisstrahl"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "06",
-                    "Name": "Blizzard"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "10",
-                    "Name": "Erdbeben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "24",
-                    "Name": "Wutanfall"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "31",
-                    "Name": "Eisenschweif"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "33",
-                    "Name": "Spukball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "59",
-                    "Name": "Samenbomben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "64",
-                    "Name": "Fokusstoß"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "65",
-                    "Name": "Energieball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "67",
-                    "Name": "Erdkräfte"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "71",
-                    "Name": "Blättersturm"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "77",
-                    "Name": "Strauchler"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "03",
                     "Name": "Aquawelle"
@@ -1136,17 +1047,90 @@
                     "Name": "Kraxler"
                 }
             ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "00",
+                    "Name": "Schwerttanz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "10",
+                    "Name": "Erdbeben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "24",
+                    "Name": "Wutanfall"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "31",
+                    "Name": "Eisenschweif"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "33",
+                    "Name": "Spukball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "59",
+                    "Name": "Samenbomben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "64",
+                    "Name": "Fokusstoß"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "65",
+                    "Name": "Energieball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "67",
+                    "Name": "Erdkräfte"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "71",
+                    "Name": "Blättersturm"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "77",
+                    "Name": "Strauchler"
+                }
+            ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=10",
-                "Meisterung=15",
-                "Meisterung=20",
-                "Meisterung=28",
-                "Meisterung=35",
-                "Meisterung=45",
-                "Meisterung=54",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Monster",
@@ -1388,7 +1372,9 @@
                     "Art": "TM",
                     "Nummer": "98",
                     "Name": "Fruststampfer"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "04",
@@ -1486,9 +1472,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "SWEX"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Wasser 1",
@@ -1767,7 +1751,9 @@
                     "Art": "TM",
                     "Nummer": "98",
                     "Name": "Fruststampfer"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "01",
@@ -1910,9 +1896,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "SWEX"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Mineral"
@@ -2155,7 +2139,9 @@
                     "Art": "TM",
                     "Nummer": "97",
                     "Name": "Wirbler"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "07",
@@ -2536,106 +2522,6 @@
                     "Name": "Fruststampfer"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "00",
-                    "Name": "Schwerttanz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "10",
-                    "Name": "Erdbeben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "12",
-                    "Name": "Agilität"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "18",
-                    "Name": "Blutsauger"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "22",
-                    "Name": "Matschbombe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "31",
-                    "Name": "Eisenschweif"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "32",
-                    "Name": "Knirscher"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "33",
-                    "Name": "Spukball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "37",
-                    "Name": "Verhöhner"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "46",
-                    "Name": "Eisenabwehr"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "54",
-                    "Name": "Giftspitzen"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "57",
-                    "Name": "Gifthieb"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "58",
-                    "Name": "Finsteraura"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "60",
-                    "Name": "Kreuzschere"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "61",
-                    "Name": "Käfergebrumm"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "91",
-                    "Name": "Giftfalle"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "95",
-                    "Name": "Neck Strike"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "06",
                     "Name": "Toxin"
@@ -2841,18 +2727,110 @@
                     "Name": "Kraxler"
                 }
             ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "00",
+                    "Name": "Schwerttanz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "10",
+                    "Name": "Erdbeben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "12",
+                    "Name": "Agilität"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "18",
+                    "Name": "Blutsauger"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "22",
+                    "Name": "Matschbombe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "31",
+                    "Name": "Eisenschweif"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "32",
+                    "Name": "Knirscher"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "33",
+                    "Name": "Spukball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "37",
+                    "Name": "Verhöhner"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "46",
+                    "Name": "Eisenabwehr"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "54",
+                    "Name": "Giftspitzen"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "57",
+                    "Name": "Gifthieb"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "58",
+                    "Name": "Finsteraura"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "60",
+                    "Name": "Kreuzschere"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "61",
+                    "Name": "Käfergebrumm"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "91",
+                    "Name": "Giftfalle"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "95",
+                    "Name": "Neck Strike"
+                }
+            ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=10",
-                "Meisterung=15",
-                "Meisterung=20",
-                "Meisterung=28",
-                "Meisterung=35",
-                "Meisterung=45",
-                "Meisterung=54",
-                "SWEX",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Käfer",
@@ -3105,7 +3083,9 @@
                     "Art": "TM",
                     "Nummer": "99",
                     "Name": "Breitseite"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "00",
@@ -3203,10 +3183,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "Schwert",
-                "SWEX"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Wasser 1",
@@ -3508,7 +3485,9 @@
                     "Art": "TM",
                     "Nummer": "91",
                     "Name": "Psychofeld"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "08",
@@ -3808,86 +3787,6 @@
                     "Name": "Kanon"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "02",
-                    "Name": "Flammenwurf"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "08",
-                    "Name": "Donnerblitz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "09",
-                    "Name": "Donner"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "15",
-                    "Name": "Feuersturm"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "22",
-                    "Name": "Matschbombe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "33",
-                    "Name": "Spukball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "35",
-                    "Name": "Aufruhr"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "37",
-                    "Name": "Verhöhner"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "52",
-                    "Name": "Gyroball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "54",
-                    "Name": "Giftspitzen"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "58",
-                    "Name": "Finsteraura"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "78",
-                    "Name": "Schlammwoge"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "91",
-                    "Name": "Giftfalle"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "11",
                     "Name": "Sonnentag"
@@ -4021,6 +3920,88 @@
                     "Art": "TM",
                     "Nummer": "90",
                     "Name": "Delegator"
+                }
+            ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "02",
+                    "Name": "Flammenwurf"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "08",
+                    "Name": "Donnerblitz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "09",
+                    "Name": "Donner"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "15",
+                    "Name": "Feuersturm"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "22",
+                    "Name": "Matschbombe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "33",
+                    "Name": "Spukball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "35",
+                    "Name": "Aufruhr"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "37",
+                    "Name": "Verhöhner"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "52",
+                    "Name": "Gyroball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "54",
+                    "Name": "Giftspitzen"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "58",
+                    "Name": "Finsteraura"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "78",
+                    "Name": "Schlammwoge"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "91",
+                    "Name": "Giftfalle"
                 }
             ],
             "Ei": [],
@@ -4210,66 +4191,6 @@
                     "Name": "Kanon"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "01",
-                    "Name": "Bodyslam"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "03",
-                    "Name": "Hydropumpe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "04",
-                    "Name": "Surfer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "05",
-                    "Name": "Eisstrahl"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "06",
-                    "Name": "Blizzard"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "17",
-                    "Name": "Amnesie"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "45",
-                    "Name": "Lehmbrühe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "67",
-                    "Name": "Erdkräfte"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "84",
-                    "Name": "Siedewasser"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "07",
                     "Name": "Hagelsturm"
@@ -4345,18 +4266,70 @@
                     "Name": "Surfer"
                 }
             ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "03",
+                    "Name": "Hydropumpe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "04",
+                    "Name": "Surfer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "17",
+                    "Name": "Amnesie"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "45",
+                    "Name": "Lehmbrühe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "67",
+                    "Name": "Erdkräfte"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "84",
+                    "Name": "Siedewasser"
+                }
+            ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=9",
-                "Meisterung=14",
-                "Meisterung=18",
-                "Meisterung=25",
-                "Meisterung=31",
-                "Meisterung=40",
-                "Meisterung=48",
-                "Meisterung=59",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Wasser 1",
@@ -4653,7 +4626,9 @@
                     "Art": "TM",
                     "Nummer": "98",
                     "Name": "Fruststampfer"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "01",
@@ -4776,9 +4751,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "SWEX"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Fee",
@@ -5035,7 +5008,9 @@
                     "Art": "TM",
                     "Nummer": "91",
                     "Name": "Psychofeld"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "11",
@@ -5312,7 +5287,9 @@
                     "Art": "TM",
                     "Nummer": "76",
                     "Name": "Kanon"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "03",
@@ -5395,9 +5372,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "SWEX"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Wasser 2"
@@ -5651,146 +5626,6 @@
                     "Name": "Wirbler"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "01",
-                    "Name": "Bodyslam"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "02",
-                    "Name": "Flammenwurf"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "03",
-                    "Name": "Hydropumpe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "04",
-                    "Name": "Surfer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "05",
-                    "Name": "Eisstrahl"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "06",
-                    "Name": "Blizzard"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "08",
-                    "Name": "Donnerblitz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "09",
-                    "Name": "Donner"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "10",
-                    "Name": "Erdbeben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "15",
-                    "Name": "Feuersturm"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "16",
-                    "Name": "Kaskade"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "24",
-                    "Name": "Wutanfall"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "31",
-                    "Name": "Eisenschweif"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "32",
-                    "Name": "Knirscher"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "35",
-                    "Name": "Aufruhr"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "37",
-                    "Name": "Verhöhner"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "45",
-                    "Name": "Lehmbrühe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "51",
-                    "Name": "Drachentanz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "58",
-                    "Name": "Finsteraura"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "62",
-                    "Name": "Drachenpuls"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "72",
-                    "Name": "Blattgeißel"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "74",
-                    "Name": "Eisenschädel"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "75",
-                    "Name": "Steinkante"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "84",
-                    "Name": "Siedewasser"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "89",
-                    "Name": "Orkan"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "05",
                     "Name": "Brüller"
@@ -5976,20 +5811,150 @@
                     "Name": "Kaskade"
                 }
             ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "02",
+                    "Name": "Flammenwurf"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "03",
+                    "Name": "Hydropumpe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "04",
+                    "Name": "Surfer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "08",
+                    "Name": "Donnerblitz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "09",
+                    "Name": "Donner"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "10",
+                    "Name": "Erdbeben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "15",
+                    "Name": "Feuersturm"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "16",
+                    "Name": "Kaskade"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "24",
+                    "Name": "Wutanfall"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "31",
+                    "Name": "Eisenschweif"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "32",
+                    "Name": "Knirscher"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "35",
+                    "Name": "Aufruhr"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "37",
+                    "Name": "Verhöhner"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "45",
+                    "Name": "Lehmbrühe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "51",
+                    "Name": "Drachentanz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "58",
+                    "Name": "Finsteraura"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "62",
+                    "Name": "Drachenpuls"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "72",
+                    "Name": "Blattgeißel"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "74",
+                    "Name": "Eisenschädel"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "75",
+                    "Name": "Steinkante"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "84",
+                    "Name": "Siedewasser"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "89",
+                    "Name": "Orkan"
+                }
+            ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=—",
-                "Meisterung=14",
-                "Meisterung=18",
-                "Meisterung=25",
-                "Meisterung=31",
-                "Meisterung=40",
-                "Meisterung=48",
-                "Meisterung=59",
-                "Meisterung=71",
-                "SWEX",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Wasser 2",
@@ -6252,7 +6217,9 @@
                     "Art": "TM",
                     "Nummer": "85",
                     "Name": "Standpauke"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "07",
@@ -6385,9 +6352,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "SWEX"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Feld",
@@ -6558,7 +6523,9 @@
                     "Art": "TM",
                     "Nummer": "97",
                     "Name": "Wirbler"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "10",
@@ -6591,9 +6558,7 @@
                 }
             ],
             "Ei": [],
-            "Tutor": [
-                "SWEX"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Feld",
@@ -6804,7 +6769,9 @@
                     "Art": "TM",
                     "Nummer": "98",
                     "Name": "Fruststampfer"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "00",
@@ -7049,7 +7016,9 @@
                     "Art": "TM",
                     "Nummer": "94",
                     "Name": "Trugschlag"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "00",
@@ -7368,111 +7337,6 @@
                     "Name": "Psychofeld"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "10",
-                    "Name": "Erdbeben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "11",
-                    "Name": "Psychokinese"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "25",
-                    "Name": "Psychoschock"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "33",
-                    "Name": "Spukball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "34",
-                    "Name": "Seher"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "38",
-                    "Name": "Trickbetrug"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "40",
-                    "Name": "Fähigkeitstausch"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "46",
-                    "Name": "Eisenabwehr"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "49",
-                    "Name": "Gedankengut"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "52",
-                    "Name": "Gyroball"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "69",
-                    "Name": "Zen-Kopfstoß"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "70",
-                    "Name": "Lichtkanone"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "74",
-                    "Name": "Eisenschädel"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "76",
-                    "Name": "Tarnsteine"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "77",
-                    "Name": "Strauchler"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "79",
-                    "Name": "Rammboss"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "83",
-                    "Name": "Seitentausch"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "99",
-                    "Name": "Body Press"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "11",
                     "Name": "Sonnentag"
@@ -7668,18 +7532,115 @@
                     "Name": "Zertrümmerer"
                 }
             ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "10",
+                    "Name": "Erdbeben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "11",
+                    "Name": "Psychokinese"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "25",
+                    "Name": "Psychoschock"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "33",
+                    "Name": "Spukball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "34",
+                    "Name": "Seher"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "38",
+                    "Name": "Trickbetrug"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "40",
+                    "Name": "Fähigkeitstausch"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "46",
+                    "Name": "Eisenabwehr"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "49",
+                    "Name": "Gedankengut"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "52",
+                    "Name": "Gyroball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "69",
+                    "Name": "Zen-Kopfstoß"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "70",
+                    "Name": "Lichtkanone"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "74",
+                    "Name": "Eisenschädel"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "76",
+                    "Name": "Tarnsteine"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "77",
+                    "Name": "Strauchler"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "79",
+                    "Name": "Rammboss"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "83",
+                    "Name": "Seitentausch"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "99",
+                    "Name": "Body Press"
+                }
+            ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=10",
-                "Meisterung=15",
-                "Meisterung=20",
-                "Meisterung=28",
-                "Meisterung=35",
-                "Meisterung=45",
-                "Meisterung=54",
-                "SWEX",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Mineral"
@@ -7774,7 +7735,9 @@
                     "Art": "TM",
                     "Nummer": "76",
                     "Name": "Kanon"
-                },
+                }
+            ],
+            "TP": [
                 {
                     "Art": "TP",
                     "Nummer": "20",
@@ -8049,71 +8012,6 @@
                     "Name": "Fruststampfer"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "01",
-                    "Name": "Bodyslam"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "05",
-                    "Name": "Eisstrahl"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "06",
-                    "Name": "Blizzard"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "10",
-                    "Name": "Erdbeben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "17",
-                    "Name": "Amnesie"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "39",
-                    "Name": "Kraftkoloss"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "67",
-                    "Name": "Erdkräfte"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "75",
-                    "Name": "Steinkante"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "76",
-                    "Name": "Tarnsteine"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "94",
-                    "Name": "Pferdestärke"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "07",
                     "Name": "Hagelsturm"
@@ -8254,18 +8152,75 @@
                     "Name": "Zertrümmerer"
                 }
             ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "10",
+                    "Name": "Erdbeben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "17",
+                    "Name": "Amnesie"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "39",
+                    "Name": "Kraftkoloss"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "67",
+                    "Name": "Erdkräfte"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "75",
+                    "Name": "Steinkante"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "76",
+                    "Name": "Tarnsteine"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "94",
+                    "Name": "Pferdestärke"
+                }
+            ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=10",
-                "Meisterung=15",
-                "Meisterung=20",
-                "Meisterung=28",
-                "Meisterung=35",
-                "Meisterung=45",
-                "Meisterung=54",
-                "Meisterung=64",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Feld"
@@ -8468,86 +8423,6 @@
                     "Name": "Dampfwalze"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "01",
-                    "Name": "Bodyslam"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "03",
-                    "Name": "Hydropumpe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "04",
-                    "Name": "Surfer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "05",
-                    "Name": "Eisstrahl"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "06",
-                    "Name": "Blizzard"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "10",
-                    "Name": "Erdbeben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "16",
-                    "Name": "Kaskade"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "17",
-                    "Name": "Amnesie"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "42",
-                    "Name": "Schallwelle"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "69",
-                    "Name": "Zen-Kopfstoß"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "79",
-                    "Name": "Rammboss"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "84",
-                    "Name": "Siedewasser"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "99",
-                    "Name": "Body Press"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "05",
                     "Name": "Brüller"
@@ -8661,6 +8536,88 @@
                     "Art": "TM",
                     "Nummer": "99",
                     "Name": "Kaskade"
+                }
+            ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "03",
+                    "Name": "Hydropumpe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "04",
+                    "Name": "Surfer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "10",
+                    "Name": "Erdbeben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "16",
+                    "Name": "Kaskade"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "17",
+                    "Name": "Amnesie"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "42",
+                    "Name": "Schallwelle"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "69",
+                    "Name": "Zen-Kopfstoß"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "79",
+                    "Name": "Rammboss"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "84",
+                    "Name": "Siedewasser"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "99",
+                    "Name": "Body Press"
                 }
             ],
             "Ei": [],
@@ -8913,96 +8870,6 @@
                     "Name": "Fruststampfer"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "00",
-                    "Name": "Schwerttanz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "01",
-                    "Name": "Bodyslam"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "03",
-                    "Name": "Hydropumpe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "04",
-                    "Name": "Surfer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "05",
-                    "Name": "Eisstrahl"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "06",
-                    "Name": "Blizzard"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "12",
-                    "Name": "Agilität"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "17",
-                    "Name": "Amnesie"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "39",
-                    "Name": "Kraftkoloss"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "46",
-                    "Name": "Eisenabwehr"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "60",
-                    "Name": "Kreuzschere"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "83",
-                    "Name": "Seitentausch"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "84",
-                    "Name": "Siedewasser"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "94",
-                    "Name": "Pferdestärke"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "98",
-                    "Name": "Aquadurchstoß"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "07",
                     "Name": "Hagelsturm"
@@ -9146,6 +9013,98 @@
                     "Art": "TM",
                     "Nummer": "98",
                     "Name": "Zertrümmerer"
+                }
+            ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "00",
+                    "Name": "Schwerttanz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "03",
+                    "Name": "Hydropumpe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "04",
+                    "Name": "Surfer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "12",
+                    "Name": "Agilität"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "17",
+                    "Name": "Amnesie"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "39",
+                    "Name": "Kraftkoloss"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "46",
+                    "Name": "Eisenabwehr"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "60",
+                    "Name": "Kreuzschere"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "83",
+                    "Name": "Seitentausch"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "84",
+                    "Name": "Siedewasser"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "94",
+                    "Name": "Pferdestärke"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "98",
+                    "Name": "Aquadurchstoß"
                 }
             ],
             "Ei": [],
@@ -9473,171 +9432,6 @@
                     "Name": "Breitseite"
                 },
                 {
-                    "Art": "TP",
-                    "Nummer": "00",
-                    "Name": "Schwerttanz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "01",
-                    "Name": "Bodyslam"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "02",
-                    "Name": "Flammenwurf"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "03",
-                    "Name": "Hydropumpe"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "04",
-                    "Name": "Surfer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "05",
-                    "Name": "Eisstrahl"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "06",
-                    "Name": "Blizzard"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "08",
-                    "Name": "Donnerblitz"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "09",
-                    "Name": "Donner"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "10",
-                    "Name": "Erdbeben"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "15",
-                    "Name": "Feuersturm"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "20",
-                    "Name": "Delegator"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "21",
-                    "Name": "Gegenschlag"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "24",
-                    "Name": "Wutanfall"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "26",
-                    "Name": "Ausdauer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "27",
-                    "Name": "Schlafrede"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "28",
-                    "Name": "Vielender"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "31",
-                    "Name": "Eisenschweif"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "32",
-                    "Name": "Knirscher"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "35",
-                    "Name": "Aufruhr"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "39",
-                    "Name": "Kraftkoloss"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "46",
-                    "Name": "Eisenabwehr"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "57",
-                    "Name": "Gifthieb"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "62",
-                    "Name": "Drachenpuls"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "64",
-                    "Name": "Fokusstoß"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "67",
-                    "Name": "Erdkräfte"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "75",
-                    "Name": "Steinkante"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "76",
-                    "Name": "Tarnsteine"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "79",
-                    "Name": "Rammboss"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "87",
-                    "Name": "Schlagbohrer"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "88",
-                    "Name": "Brandstempel"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "94",
-                    "Name": "Pferdestärke"
-                },
-                {
-                    "Art": "TP",
-                    "Nummer": "99",
-                    "Name": "Body Press"
-                },
-                {
                     "Art": "TM",
                     "Nummer": "05",
                     "Name": "Brüller"
@@ -9863,19 +9657,175 @@
                     "Name": "Kraxler"
                 }
             ],
+            "TP": [
+                {
+                    "Art": "TP",
+                    "Nummer": "00",
+                    "Name": "Schwerttanz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "02",
+                    "Name": "Flammenwurf"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "03",
+                    "Name": "Hydropumpe"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "04",
+                    "Name": "Surfer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "08",
+                    "Name": "Donnerblitz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "09",
+                    "Name": "Donner"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "10",
+                    "Name": "Erdbeben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "15",
+                    "Name": "Feuersturm"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "21",
+                    "Name": "Gegenschlag"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "24",
+                    "Name": "Wutanfall"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "28",
+                    "Name": "Vielender"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "31",
+                    "Name": "Eisenschweif"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "32",
+                    "Name": "Knirscher"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "35",
+                    "Name": "Aufruhr"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "39",
+                    "Name": "Kraftkoloss"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "46",
+                    "Name": "Eisenabwehr"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "57",
+                    "Name": "Gifthieb"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "62",
+                    "Name": "Drachenpuls"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "64",
+                    "Name": "Fokusstoß"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "67",
+                    "Name": "Erdkräfte"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "75",
+                    "Name": "Steinkante"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "76",
+                    "Name": "Tarnsteine"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "79",
+                    "Name": "Rammboss"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "87",
+                    "Name": "Schlagbohrer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "88",
+                    "Name": "Brandstempel"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "94",
+                    "Name": "Pferdestärke"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "99",
+                    "Name": "Body Press"
+                }
+            ],
             "Ei": [],
-            "Tutor": [
-                "Meisterung=10",
-                "Meisterung=15",
-                "Meisterung=20",
-                "Meisterung=28",
-                "Meisterung=35",
-                "Meisterung=45",
-                "Meisterung=54",
-                "Meisterung=64",
-                "SWEX",
-                "PLA"
-            ]
+            "Tutor": []
         },
         "EiGruppen": [
             "Monster",

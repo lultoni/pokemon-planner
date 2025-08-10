@@ -13,30 +13,50 @@ def normalize_title(name: str) -> str:
     return name.replace(" ", "_")
 
 
+def normalize_title(title: str) -> str:
+    """Normalisiert den Titel für die URL (z.B. Leerzeichen zu Unterstrich)."""
+    return title.replace(' ', '_')
+
+
 def fetch_attack_page_wikitext(attack_name: str, session: Optional[requests.Session] = None) -> Optional[str]:
-    """Holt den rohen Wikitext einer Attackenseite von Pokéwiki in der Edit-Ansicht."""
+    """
+    Holt den rohen Wikitext einer Attackenseite von Pokéwiki und entfernt
+    irrelevante Abschnitte wie "In Spin-offs".
+    """
     sess = session or requests.Session()
     title = normalize_title(attack_name)
     url = f"https://www.pokewiki.de/index.php?title={title}&action=edit"
+
     try:
         r = sess.get(url, timeout=15)
         r.raise_for_status()
+
         match = re.search(r'<textarea[^>]+id="wpTextbox1"[^>]*>(.*?)</textarea>', r.text, re.DOTALL)
+
         if match:
-            return match.group(1)
+            wikitext = match.group(1)
+
+            # --- Irrelevanten Abschnitt entfernen ---
+            # Sucht nach der Überschrift "== In Spin-offs ==" und schneidet alles danach ab.
+            # Der re.DOTALL-Modifikator sorgt dafür, dass "." auch Newlines matched.
+            wikitext_cleaned = re.split(r'==\s*In Spin-offs\s*==', wikitext, 1, flags=re.IGNORECASE | re.DOTALL)
+
+            # Wenn der Abschnitt gefunden wurde, nehmen wir den Teil davor.
+            return wikitext_cleaned[0].strip()
+
         print(f"❌ Kein Wikitext für Attacke '{attack_name}' gefunden.")
+
     except Exception as e:
         print(f"❌ Fehler beim Abrufen von Attacke '{attack_name}': {e}")
+
     return None
 
 
 def simple_extract_fields(wikitext: str) -> Dict[str, Any]:
     """
     Extrahiert die wichtigsten Datenfelder aus dem Wikitext einer Attacke.
-    Behebt die in den TODOs genannten Probleme.
+    Behebt Probleme bei der Verarbeitung von Generationsangaben und Sonderzeichen.
     """
-    # FIX: Muster angepasst, um korrekte Felder (z.B. Klasse, Priorität) zu finden
-    # und flexibler zu sein (erlaubt Newlines im Wert).
     field_patterns = {
         "Typ": re.compile(r"\|\s*[Tt]yp\s*=\s*([^\|}]+)"),
         "Kategorie": re.compile(r"\|\s*(?:Klasse|Kategorie)\s*=\s*([^\|}]+)"),
@@ -47,19 +67,39 @@ def simple_extract_fields(wikitext: str) -> Dict[str, Any]:
     }
 
     data: Dict[str, Optional[str]] = {}
+
     for key, pat in field_patterns.items():
         m = pat.search(wikitext)
         if m:
-            # FIX: Bereinigt den extrahierten Wert von HTML-Tags, Entitäten und Wiki-Links.
             raw_value = m.group(1).strip()
-            cleaned_value = re.sub(r'<[^>]+>', ' ', raw_value)  # Entfernt HTML-Tags wie <br />
-            cleaned_value = cleaned_value.replace('&nbsp;', ' ').replace('&amp;', '&')
-            cleaned_value = re.sub(r'\[\[(?:[^|\]]+\|)?([^\]]+)\]\]', r'\1', cleaned_value) # Löst [[...]] auf
-            data[key] = ' '.join(cleaned_value.split()) # Normalisiert Leerzeichen
+
+            # TODO: Logik für Generationsangaben testen
+            # Spezialbehandlung für Stärke und Genauigkeit, um den Wert der 8. Gen zu extrahieren.
+            if key in ["Stärke", "Genauigkeit"]:
+                # Sucht nach dem letzten Wert, der von "ab Gen. X" (X >= 6) eingeführt wurde
+                gen_value_match = re.findall(r'(\d+)\s*\(ab Gen\. [6-9]\)', raw_value)
+                if gen_value_match:
+                    value = gen_value_match[-1]  # Nimm den letzten Wert
+                else:
+                    # Wenn keine spezifische Generationsangabe vorhanden ist, nimm den ersten Zahlwert.
+                    # Dies deckt Fälle wie "20<small>+</small>" ab.
+                    simple_value_match = re.search(r'^(\d+)', raw_value)
+                    if simple_value_match:
+                        value = simple_value_match.group(1)
+                    else:
+                        value = raw_value # Fallback auf den rohen Wert
+            else:
+                value = raw_value
+
+            # Bereinigt den extrahierten Wert
+            cleaned_value = re.sub(r'<[^>]+>', '', value)
+            cleaned_value = cleaned_value.replace('&nbsp;', '').replace('&amp;', '&')
+            cleaned_value = re.sub(r'\[\[(?:[^|\]]+\|)?([^\]]+)\]\]', r'\1', cleaned_value)
+
+            data[key] = cleaned_value.strip() if cleaned_value.strip() else None
         else:
             data[key] = None
 
-    # FIX: Korrekte Aufteilung von AP und AP_max aus dem Format "20 (max. 32)"
     if data.get("AP"):
         ap_match = re.search(r'(\d+)\s*\(max\.\s*(\d+)\)', data["AP"])
         if ap_match:
@@ -69,14 +109,10 @@ def simple_extract_fields(wikitext: str) -> Dict[str, Any]:
     else:
         data["AP_max"] = None
 
-    # FIX: Extrahiert Erlernbarkeiten für Schwert/Schild aus dem Haupttext.
-    # Dieser Ansatz ist robuster, da die Daten in einem eigenen Abschnitt stehen.
     erlernbarkeiten = []
-    # Sucht den gesamten "Erlernbarkeit"-Abschnitt
     learn_section_match = re.search(r'==\s*Erlernbarkeit\s*==\s*(.*)', wikitext, re.DOTALL)
     if learn_section_match:
         learn_section_text = learn_section_match.group(1)
-        # Isoliert den Block für Schwert/Schild (swsh)
         swsh_block_match = re.search(
             r'\{\{Atk-Erlernbarkeit/Kopf\|edition=swsh.*?\}\}(.*?)(?=\{\{Atk-Erlernbarkeit/Kopf|\|\}|\Z)',
             learn_section_text,
@@ -84,7 +120,6 @@ def simple_extract_fields(wikitext: str) -> Dict[str, Any]:
         )
         if swsh_block_match:
             swsh_block_text = swsh_block_match.group(1)
-            # Extrahiert alle Pokédex-Nummern aus den Zeilen-Templates
             pokemon_numbers = re.findall(r'\{\{Atk-Erlernbarkeit/Zeile\|(\d{3,4})', swsh_block_text)
             erlernbarkeiten = [p.strip() for p in pokemon_numbers]
     data["Erlernbarkeiten"] = erlernbarkeiten
@@ -108,9 +143,7 @@ def build_attack_entry(attack_name: str) -> Optional[Dict]:
         "AP": extracted.get("AP"),
         "AP_max": extracted.get("AP_max"),
         "Priority": extracted.get("Priority"),
-        "Erlernbarkeiten_SWSH_DexNr": extracted.get("Erlernbarkeiten"), # Umbenannt für Klarheit
-        "Rohtext": text,
-        "Quelle": f"https://www.pokewiki.de/index.php?title={normalize_title(attack_name)}&action=edit",
+        "Erlernbarkeiten_SWSH_DexNr": extracted.get("Erlernbarkeiten")
     }
     return entry
 

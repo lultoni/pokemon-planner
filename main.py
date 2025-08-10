@@ -59,86 +59,6 @@ def get_team_from_trainer_from_wiki(trainer_name: str) -> Optional[List[str]]:
 
     return list_available_pokemon
 
-def get_attacken_gen8_structured_from_wiki(pokemon_name, max_level=None):
-    url = f"https://www.pokewiki.de/index.php?title={pokemon_name}/Attacken&action=edit"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        print(f"Fehler beim Abrufen der Attacken-Seite für {pokemon_name}: {e}")
-        return [] # Leere Liste bei Fehler
-
-    # Text extrahieren
-    match = re.search(r'<textarea[^>]+id="wpTextbox1"[^>]*>(.*?)</textarea>', response.text, re.DOTALL)
-    if not match:
-        print(f"Textarea für Attacken von {pokemon_name} nicht gefunden.")
-        return []
-
-    raw_text = match.group(1).replace('&amp;nbsp;', ' ').replace('&nbsp;', ' ')
-
-    # Alle Tabellen mit g=8 finden
-    # Verbessertes Regex, um sicherzustellen, dass wir nicht über Tabellengrenzen hinaus matchen
-    tables = re.findall(r'\{\{Atk-Table\|g=8\|Art=([^\|}]+).*?\}\}(.*?)(?=\{\{Atk-Table|\Z)', raw_text, re.DOTALL)
-
-    attacken_liste = []
-
-    for art, content in tables:
-        # Regex für AtkRow, etwas fehlertoleranter bei Leerzeichen
-        atk_rows = re.findall(
-            r'\{\{AtkRow\s*\|\s*([^\|]*?)\s*\|\s*([^\|]+?)\s*\|\s*([^\|]+?)\s*\|\s*([^\|]+?)\s*\|\s*([^\|]*?)\s*\|\s*([^\|]*?)\s*\|\s*([^\|]*?)\s*\|\s*G=8\s*\}\}',
-            content
-        )
-        for level, name, typ, kategorie, staerke, genauigkeit, ap in atk_rows:
-            level_clean = level.strip()
-            lvl = None
-            # Versuch, Level zu interpretieren (Startlevel ist oft 'Start')
-            if level_clean.isdigit():
-                lvl = int(level_clean)
-            elif level_clean.lower() == 'start':
-                lvl = 1 # Behandle 'Start' wie Level 1 für die Filterung
-
-            # Filtern nach max_level, wenn die Attacke durch Levelaufstieg erlernt wird
-            if art == "Level" and max_level is not None:
-                if lvl is None or lvl > max_level:
-                    continue
-
-            attacken_liste.append({
-                'Pokemon': pokemon_name,
-                'Art': art.strip(),
-                'Level': lvl if lvl is not None else level_clean, # Behalte Originalstring, wenn keine Zahl
-                'Name': name.strip(),
-                'Typ': typ.strip(),
-                'Kategorie': kategorie.strip(),
-                'Stärke': staerke.strip(),
-                'Genauigkeit': genauigkeit.strip(),
-                'AP': ap.strip()
-            })
-
-    # Duplikate entfernen anhand eines eindeutigen Hash-Schlüssels der Kern-Attackendaten
-    unique_attacks = {}
-    for atk in attacken_liste:
-        # Schlüssel basiert auf den wesentlichen Eigenschaften der Attacke
-        key = (
-            atk['Name'],
-            atk['Typ'],
-            atk['Kategorie'],
-            atk['Stärke'],
-            atk['Genauigkeit'],
-            atk['AP']
-        )
-        # Behalte die Attacke mit dem niedrigsten Level (oder 'Start'), falls Duplikate existieren
-        if key not in unique_attacks:
-            unique_attacks[key] = atk
-        else:
-            # Wenn die neue Attacke ein niedrigeres Level hat (oder 'Start' ist)
-            current_lvl = unique_attacks[key]['Level']
-            new_lvl = atk['Level']
-            # Einfache Logik: Bevorzuge numerische Level über 'Start', wenn beide vorhanden sind?
-            # Oder nimm immer die erste gefundene? Wir nehmen hier die erste gefundene.
-            pass # Aktuell wird die erste gefundene behalten.
-
-    return list(unique_attacks.values())
-
 def gruppiere_attacken(
         attacken: List[Dict[str, Any]],
         schluessel: str,
@@ -321,8 +241,7 @@ def main():
 
             print(f"\n\n==================== {pokemon_name} ({typen_str}) (bis Level {level_cap}) ====================")
 
-            # attacken = information_manager.get_pokemon_in_cache(pokemon_name).get("Attacken") # todo implement new code
-            attacken = get_attacken_gen8_structured_from_wiki(pokemon_name, level_cap) # todo old code
+            attacken = information_manager.get_attacken_of_pokemon_structured(pokemon_name, level_cap)
             pokemon_daten_eigen.append({
                 'name': pokemon_name,
                 'level_cap': level_cap,

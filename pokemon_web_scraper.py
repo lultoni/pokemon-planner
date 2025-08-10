@@ -66,6 +66,7 @@ def extract_structured_attacks(wikitext: str) -> Dict[str, List[Any]]:
     attacken = {
         "LevelUp": [],
         "TM": [],
+        "TP": [],
         "Ei": [],
         "Tutor": []
     }
@@ -74,6 +75,7 @@ def extract_structured_attacks(wikitext: str) -> Dict[str, List[Any]]:
     unique_checks: Dict[str, Set[Any]] = {
         "LevelUp": set(),
         "TM": set(),
+        "TP": set(),
         "Ei": set(),
         "Tutor": set()
     }
@@ -116,9 +118,10 @@ def extract_structured_attacks(wikitext: str) -> Dict[str, List[Any]]:
                 tm_num = ''.join(filter(str.isdigit, source_info))
                 attack_data = {"Art": tm_type, "Nummer": tm_num, "Name": name}
                 # Duplikat-Schlüssel: (Art, Nummer, Name)
-                if (tm_type, tm_num, name) not in unique_checks["TM"]:
-                    attacken["TM"].append(attack_data)
-                    unique_checks["TM"].add((tm_type, tm_num, name))
+                if (tm_type, tm_num, name) not in unique_checks[tm_type]:
+                    attacken[tm_type].append(attack_data)
+                    unique_checks[tm_type].add((tm_type, tm_num, name))
+
 
             # ----- Ei-Attacken (Zucht) -----
             elif art_clean == 'zucht':
@@ -128,11 +131,11 @@ def extract_structured_attacks(wikitext: str) -> Dict[str, List[Any]]:
                     unique_checks["Ei"].add(name)
 
             # ----- Tutor-Attacken (Lehrer, Meisterung) -----
-            elif art_clean in ['lehrer', 'meisterung']:
-                # Duplikat-Schlüssel: Name
-                if name not in unique_checks["Tutor"]:
-                    attacken["Tutor"].append(name)
-                    unique_checks["Tutor"].add(name)
+            # elif art_clean in ['lehrer', 'meisterung']:
+            #     # Duplikat-Schlüssel: Name
+            #     if name not in unique_checks["Tutor"]:
+            #         attacken["Tutor"].append(name)
+            #         unique_checks["Tutor"].add(name)
 
     # LevelUp-Attacken nach Level sortieren
     attacken["LevelUp"] = sorted(attacken["LevelUp"], key=lambda x: x['Level'])
