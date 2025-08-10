@@ -1,7 +1,5 @@
 import os
 
-from main import is_strong_enough, is_allowed_level
-
 # --- BASE PROGRAMM FUNCTIONALITY (no changes required) ---
 
 pokemon_types = [
@@ -35,6 +33,19 @@ def filter_funktion_error(atk):
             and is_allowed_level(atk['Level']))
 trainer_name = "asdf"
 backup_typen = ['Geist', 'Unlicht', 'Feuer', 'Boden']
+
+def is_allowed_level(level):
+    if ALLOW_TP_MOVES:
+        return True
+    if isinstance(level, str) and level.upper().startswith("TP"):
+        return False
+    return True
+
+def is_strong_enough(stärke, minimum):
+    try:
+        return int(stärke) >= minimum
+    except (ValueError, TypeError):
+        return True
 
 # --- INDIVIDUAL LEVEL DATA (change to fit your playthrough) ---
 

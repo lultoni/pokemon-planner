@@ -11,19 +11,6 @@ import type_effectiveness
 
 # --------------- FUNCTION DEFINITIONS ---------------
 
-def is_allowed_level(level):
-    if ALLOW_TP_MOVES:
-        return True
-    if isinstance(level, str) and level.upper().startswith("TP"):
-        return False
-    return True
-
-def is_strong_enough(stärke, minimum):
-    try:
-        return int(stärke) >= minimum
-    except (ValueError, TypeError):
-        return True
-
 def get_team_from_trainer_from_wiki(trainer_name: str) -> Optional[List[str]]:
     """
     Holt die Pokémon-Namen aus dem Arenakampf-Abschnitt eines Trainers (z.B. Papella).

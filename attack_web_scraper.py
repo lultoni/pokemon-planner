@@ -1,21 +1,3 @@
-"""
-attack_scraper.py
-
-Sammelt die Wikicode-Seiten von Attacken von Pokéwiki (Edit-Ansicht)
-und speichert strukturierte (so gut es geht) Daten in
-global_infos.ATTACK_CACHE_FILE_PATH (JSON).
-
-Features:
-- Angriffsnamen als Kommandozeilenargumente oder aus einer Datei einlesen
-- Optional: alle Attacken aus dem Pokemon-Cache (global_infos.POKEMON_CACHE_FILE_PATH)
-- Versucht, vorhandene Funktion `extract_structured_attacks` zu verwenden, sonst Fallback-Parser
-
-Benutzung:
-python attack_scraper.py Flamethrower Donnerschlag
-python attack_scraper.py --file attacks.txt
-python attack_scraper.py --from-pokemon-cache
-
-"""
 from __future__ import annotations
 
 import argparse
@@ -23,36 +5,16 @@ import json
 import os
 import re
 import requests
-import sys
-from typing import Dict, List, Optional
-
-# Importiere globale Pfade
-try:
-    import global_infos
-except Exception as e:
-    print("Fehler: Modul 'global_infos' konnte nicht importiert werden. Stelle sicher, dass es im PYTHONPATH ist.")
-    raise
-
-# Versuche, vorhandene Parser-Funktionen zu verwenden (falls Teil des Projekts)
-try:
-    # falls extract_structured_attacks in demselben Projekt definiert ist
-    from pokemon_web_scraper import extract_structured_attacks  # type: ignore
-except Exception:
-    extract_structured_attacks = None  # Fallback nutzen
+from typing import Dict, Optional, List, Any
 
 
 def normalize_title(name: str) -> str:
-    """Wandelt einen Display-Namen zu dem Titel um, den Pokéwiki in der URL erwartet.
-    Beispiele: Räume Leerzeichen in '_' um, keine weiteren Änderungen (Pokéwiki nutzt meist Unterstriche).
-    """
-    # Pokéwiki benutzt oft Unterstriche bei URLs und Umlaute bleiben (werden urlencoded automatisch von requests)
+    """Normalisiert einen Attackennamen für die URL."""
     return name.replace(" ", "_")
 
 
 def fetch_attack_page_wikitext(attack_name: str, session: Optional[requests.Session] = None) -> Optional[str]:
-    """Lädt die Edit-Ansicht einer Attacke und extrahiert den Inhalt des Textareas (wpTextbox1).
-    Gibt None zurück, wenn etwas schiefgeht.
-    """
+    """Holt den rohen Wikitext einer Attackenseite von Pokéwiki in der Edit-Ansicht."""
     sess = session or requests.Session()
     title = normalize_title(attack_name)
     url = f"https://www.pokewiki.de/index.php?title={title}&action=edit"
@@ -61,59 +23,81 @@ def fetch_attack_page_wikitext(attack_name: str, session: Optional[requests.Sess
         r.raise_for_status()
         match = re.search(r'<textarea[^>]+id="wpTextbox1"[^>]*>(.*?)</textarea>', r.text, re.DOTALL)
         if match:
-            wikitext = match.group(1)
-            return wikitext
-        print(f"❌ Kein Wikitext für Attacke '{attack_name}' gefunden (Seite geladen).")
+            return match.group(1)
+        print(f"❌ Kein Wikitext für Attacke '{attack_name}' gefunden.")
     except Exception as e:
         print(f"❌ Fehler beim Abrufen von Attacke '{attack_name}': {e}")
     return None
 
 
-# Fallback-Parser: versucht einige typische Felder aus der Attackenseite herauszuziehen
-FIELD_PATTERNS = {
-    "Typ": re.compile(r"\|\s*[Tt]yp\s*=\s*([^\n\|}]+)"),
-    "Kategorie": re.compile(r"\|\s*[Kk]ategorie\s*=\s*([^\n\|}]+)"),
-    "Stärke": re.compile(r"\|\s*(?:Stärke|Schaden|Power)\s*=\s*([^\n\|}]+)"),
-    "Genauigkeit": re.compile(r"\|\s*[Gg]enauigkeit\s*=\s*([^\n\|}]+)"),
-    "AP": re.compile(r"\|\s*AP\s*=\s*([^\n\|}]+)"),
-    "Priority": re.compile(r"\|\s*Priority\s*=\s*([^\n\|}]+)"),
-    "Beschreibung": re.compile(r"(?:<small>|)\s*([^\n\r]{10,300})\s*(?:</small>|)"),
-}
-
-
-def simple_extract_fields(wikitext: str) -> Dict[str, Optional[str]]:
-    """Extrahiert mit heuristischen Regex-Feldern einige nützliche Informationen.
-    Liefert ein Dict mit den extrahierten Feldern (None wenn nicht gefunden) und dem Rohtext.
+def simple_extract_fields(wikitext: str) -> Dict[str, Any]:
     """
+    Extrahiert die wichtigsten Datenfelder aus dem Wikitext einer Attacke.
+    Behebt die in den TODOs genannten Probleme.
+    """
+    # FIX: Muster angepasst, um korrekte Felder (z.B. Klasse, Priorität) zu finden
+    # und flexibler zu sein (erlaubt Newlines im Wert).
+    field_patterns = {
+        "Typ": re.compile(r"\|\s*[Tt]yp\s*=\s*([^\|}]+)"),
+        "Kategorie": re.compile(r"\|\s*(?:Klasse|Kategorie)\s*=\s*([^\|}]+)"),
+        "Stärke": re.compile(r"\|\s*(?:Stärke|Power|Schaden)\s*=\s*([^\|}]+)"),
+        "Genauigkeit": re.compile(r"\|\s*[Gg]enauigkeit\s*=\s*([^\|}]+)"),
+        "AP": re.compile(r"\|\s*AP\s*=\s*([^\|}]+)"),
+        "Priority": re.compile(r"\|\s*Priorität\s*=\s*([^\|}]+)"),
+    }
+
     data: Dict[str, Optional[str]] = {}
-    for key, pat in FIELD_PATTERNS.items():
+    for key, pat in field_patterns.items():
         m = pat.search(wikitext)
-        data[key] = m.group(1).strip() if m else None
-    data["Rohtext"] = wikitext
+        if m:
+            # FIX: Bereinigt den extrahierten Wert von HTML-Tags, Entitäten und Wiki-Links.
+            raw_value = m.group(1).strip()
+            cleaned_value = re.sub(r'<[^>]+>', ' ', raw_value)  # Entfernt HTML-Tags wie <br />
+            cleaned_value = cleaned_value.replace('&nbsp;', ' ').replace('&amp;', '&')
+            cleaned_value = re.sub(r'\[\[(?:[^|\]]+\|)?([^\]]+)\]\]', r'\1', cleaned_value) # Löst [[...]] auf
+            data[key] = ' '.join(cleaned_value.split()) # Normalisiert Leerzeichen
+        else:
+            data[key] = None
+
+    # FIX: Korrekte Aufteilung von AP und AP_max aus dem Format "20 (max. 32)"
+    if data.get("AP"):
+        ap_match = re.search(r'(\d+)\s*\(max\.\s*(\d+)\)', data["AP"])
+        if ap_match:
+            data["AP"], data["AP_max"] = ap_match.group(1), ap_match.group(2)
+        else:
+            data["AP_max"] = None # Nur AP-Wert vorhanden
+    else:
+        data["AP_max"] = None
+
+    # FIX: Extrahiert Erlernbarkeiten für Schwert/Schild aus dem Haupttext.
+    # Dieser Ansatz ist robuster, da die Daten in einem eigenen Abschnitt stehen.
+    erlernbarkeiten = []
+    # Sucht den gesamten "Erlernbarkeit"-Abschnitt
+    learn_section_match = re.search(r'==\s*Erlernbarkeit\s*==\s*(.*)', wikitext, re.DOTALL)
+    if learn_section_match:
+        learn_section_text = learn_section_match.group(1)
+        # Isoliert den Block für Schwert/Schild (swsh)
+        swsh_block_match = re.search(
+            r'\{\{Atk-Erlernbarkeit/Kopf\|edition=swsh.*?\}\}(.*?)(?=\{\{Atk-Erlernbarkeit/Kopf|\|\}|\Z)',
+            learn_section_text,
+            re.DOTALL
+        )
+        if swsh_block_match:
+            swsh_block_text = swsh_block_match.group(1)
+            # Extrahiert alle Pokédex-Nummern aus den Zeilen-Templates
+            pokemon_numbers = re.findall(r'\{\{Atk-Erlernbarkeit/Zeile\|(\d{3,4})', swsh_block_text)
+            erlernbarkeiten = [p.strip() for p in pokemon_numbers]
+    data["Erlernbarkeiten"] = erlernbarkeiten
+
     return data
 
 
-def build_attack_entry(attack_name: str, session: Optional[requests.Session] = None) -> Optional[Dict]:
-    """Erstellt den zu speichernden Eintrag für eine Attacke.
-    Wenn eine projektinterne Funktion `extract_structured_attacks` vorhanden ist, wird sie (falls kompatibel) verwendet.
-    Ansonsten wird ein einfacher Fallback-Parser genutzt und der komplette Rohtext gespeichert.
-    """
-    text = fetch_attack_page_wikitext(attack_name, session=session)
+def build_attack_entry(attack_name: str) -> Optional[Dict]:
+    """Baut den kompletten Datensatz für eine Attacke."""
+    text = fetch_attack_page_wikitext(attack_name)
     if not text:
         return None
 
-    # Falls bereits ein Projektparser existiert und eine Funktion bereitsteht, versuche diese zu nutzen
-    if extract_structured_attacks:
-        try:
-            parsed = extract_structured_attacks(text)
-            # Wenn die Funktion eine Liste zurückgibt, nehmen wir das erste Element oder packen die Liste als 'Parsed'
-            if isinstance(parsed, list):
-                return {"Name": attack_name, "Parsed": parsed, "Rohtext": text}
-            return {"Name": attack_name, "Parsed": parsed, "Rohtext": text}
-        except Exception as e:
-            print(f"⚠️ Fehler beim Verwenden von 'extract_structured_attacks': {e} — falle zurück auf simplen Parser.")
-
-    # Fallback: einfache Feld-Extraktion
     extracted = simple_extract_fields(text)
     entry = {
         "Name": attack_name,
@@ -122,109 +106,97 @@ def build_attack_entry(attack_name: str, session: Optional[requests.Session] = N
         "Stärke": extracted.get("Stärke"),
         "Genauigkeit": extracted.get("Genauigkeit"),
         "AP": extracted.get("AP"),
+        "AP_max": extracted.get("AP_max"),
         "Priority": extracted.get("Priority"),
-        "Beschreibung_snippet": extracted.get("Beschreibung"),
-        "Rohtext": extracted.get("Rohtext"),
+        "Erlernbarkeiten_SWSH_DexNr": extracted.get("Erlernbarkeiten"), # Umbenannt für Klarheit
+        "Rohtext": text,
+        "Quelle": f"https://www.pokewiki.de/index.php?title={normalize_title(attack_name)}&action=edit",
     }
     return entry
 
 
-def save_attack_to_cache(attack_name: str, data: Dict, filename: str = None):
+def save_attack_to_cache(attack_name: str, data: Dict, filename: Optional[str] = None):
+    """Speichert eine Attacke im JSON-Cache."""
     if filename is None:
-        filename = global_infos.ATTACK_CACHE_FILE_PATH
+        try:
+            import global_infos  # type: ignore
+            filename = getattr(global_infos, "ATTACK_CACHE_FILE_PATH", None)
+        except (ImportError, AttributeError):
+            filename = None
+
+    if filename is None:
+        filename = os.path.join(os.getcwd(), "attack_cache.json")
 
     if os.path.exists(filename):
         try:
             with open(filename, "r", encoding="utf-8") as f:
                 cache = json.load(f)
-        except Exception:
+        except (json.JSONDecodeError, IOError):
             cache = {}
     else:
         cache = {}
 
     cache[attack_name] = data
-
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=4, ensure_ascii=False)
-    print(f"✅ {attack_name} wurde in {filename} gespeichert.")
+    print(f"✅ '{attack_name}' wurde erfolgreich im Cache gespeichert.")
 
 
-def load_attacks_from_file(path: str) -> List[str]:
-    if not os.path.exists(path):
-        print(f"Datei '{path}' nicht gefunden.")
-        return []
-    with open(path, "r", encoding="utf-8") as f:
-        lines = [ln.strip() for ln in f.readlines()]
-    # Entferne Kommentare/Leere Zeilen
-    attacks = [ln for ln in lines if ln and not ln.startswith("#")]
-    return attacks
-
-
-def load_attacks_from_pokemon_cache(pokemon_cache_path: str) -> List[str]:
-    """Liest alle Attackennamen aus dem Pokemon-Cache (falls vorhanden).
-    Erwartet, dass die Struktur dem in build_pokemon_entry zurückgegebenen Dict entspricht
-    und unter dem Schlüssel 'Attacken' eine Liste mit Attackennamen oder Attacken-Objekten steht.
+def get_attack(attack_name: str, filename: Optional[str] = None) -> Optional[Dict]:
     """
-    if not os.path.exists(pokemon_cache_path):
-        print(f"Pokemon-Cache '{pokemon_cache_path}' nicht gefunden.")
-        return []
-    try:
-        with open(pokemon_cache_path, "r", encoding="utf-8") as f:
-            cache = json.load(f)
-    except Exception as e:
-        print(f"Fehler beim Laden des Pokemon-Caches: {e}")
-        return []
+    Holt eine Attacke aus dem Cache oder scrapt sie bei Bedarf.
+    Dies ist die primäre Zugriffsfunktion für andere Skripte.
+    """
+    if filename is None:
+        try:
+            import global_infos  # type: ignore
+            filename = getattr(global_infos, "ATTACK_CACHE_FILE_PATH", None)
+        except (ImportError, AttributeError):
+            filename = None
+    if filename is None:
+        filename = os.path.join(os.getcwd(), "attack_cache.json")
 
-    attacks_set = set()
-    for pname, pdata in cache.items():
-        attacks = pdata.get("Attacken")
-        if not attacks:
-            continue
-        # Attacken können Strings oder Objekte sein
-        for a in attacks:
-            if isinstance(a, str):
-                attacks_set.add(a)
-            elif isinstance(a, dict):
-                # falls das Objekt einen Namen enthält
-                name = a.get("Name") or a.get("Bezeichnung")
-                if name:
-                    attacks_set.add(name)
-    return sorted(attacks_set)
+    if os.path.exists(filename):
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                cache = json.load(f)
+            if attack_name in cache:
+                print(f"ℹ️ '{attack_name}' aus dem Cache geladen.")
+                return cache[attack_name]
+        except (json.JSONDecodeError, IOError):
+            pass  # Cache ist korrupt oder leer, wird überschrieben
+
+    print(f"ℹ️ '{attack_name}' nicht im Cache gefunden. Starte Scraping...")
+    entry = build_attack_entry(attack_name)
+    if entry:
+        save_attack_to_cache(attack_name, entry, filename)
+    return entry
 
 
-def main(argv: Optional[List[str]] = None):
-    ap = argparse.ArgumentParser(description="Scrape Attacken-Wikitext von Pokéwiki und speichern in JSON-Cache.")
-    ap.add_argument("attacks", nargs="*", help="Namen der Attacken (z.B. Flamethrower), Leerzeichen bitte in Anführungszeichen oder mit Unterstrich")
-    ap.add_argument("--file", "-f", help="Datei mit Attackennamen, eine pro Zeile")
-    ap.add_argument("--from-pokemon-cache", action="store_true", help="Alle Attacken aus dem Pokemon-Cache laden")
-    ap.add_argument("--cache-file", help="Ziel-JSON-Datei (überschreibt global_infos.ATTACK_CACHE_FILE_PATH)")
-    args = ap.parse_args(argv)
+def parse_args():
+    """Parst die Kommandozeilenargumente."""
+    ap = argparse.ArgumentParser(description="Scrape genau EINE Attacke von Pokéwiki und speichere sie in einem JSON-Cache.")
+    ap.add_argument("attack", help="Name der Attacke (z. B. 'Ränkeschmied' oder 'Mogelhieb').")
+    ap.add_argument("--cache-file", help="Optionaler Pfad zur Ziel-JSON-Datei.")
+    return ap.parse_args()
 
-    target_file = args.cache_file or global_infos.ATTACK_CACHE_FILE_PATH
 
-    attacks: List[str] = []
-    if args.file:
-        attacks.extend(load_attacks_from_file(args.file))
-
-    if args.from_pokemon_cache:
-        attacks.extend(load_attacks_from_pokemon_cache(global_infos.POKEMON_CACHE_FILE_PATH))
-
-    if args.attacks:
-        attacks.extend(args.attacks)
-
-    attacks = [a for a in attacks if a]  # filter
-    if not attacks:
-        print("Keine Attacken angegeben. Nutze --help für Optionen.")
+def main():
+    """Hauptfunktion des Skripts."""
+    args = parse_args()
+    attack_name = args.attack.strip()
+    if not attack_name:
+        print("Bitte einen gültigen Attackennamen angeben.")
         return
 
-    sess = requests.Session()
-    for a in attacks:
-        print(f"--- Verarbeite: {a}")
-        entry = build_attack_entry(a, session=sess)
-        if entry:
-            save_attack_to_cache(a, entry, filename=target_file)
-        else:
-            print(f"⚠️ Konnte Eintrag für Attacke '{a}' nicht erstellen.")
+    entry = get_attack(attack_name, args.cache_file)
+    if not entry:
+        print(f"⚠️ Konnte die Attacke '{attack_name}' nicht abrufen oder verarbeiten.")
+    else:
+        # Gib eine saubere Zusammenfassung aus
+        print("\n--- Ergebnisse für:", attack_name, "---")
+        print(json.dumps(entry, indent=2, ensure_ascii=False))
+        print("---------------------------------")
 
 
 if __name__ == '__main__':
