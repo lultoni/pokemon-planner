@@ -37,6 +37,15 @@ backup_typen = ['Geist', 'Unlicht', 'Feuer', 'Boden']
 
 # --- INDIVIDUAL LEVEL DATA (change to fit your playthrough) ---
 
+starter_pokemon_list = [
+    "Chimpep", "Chimstix", "Gortrom",
+    "Hopplo", "Kickerlo", "Liberlo",
+    "Memmeon", "Phlegleon", "Intelleon"
+]
+
+# Kann entweder 0, 3 oder 6 sein.
+starter_pokemon = starter_pokemon_list[6]
+
 owned_pokemon_list = [
     "Vulnona", "Rexblisar", "Flunschlik", "Golgantes", "Strepoli", "Piondragi",
     "Intelleon", "Psiaugon", "Smogon", "Schalellos", "Olangaar", "Maritellit",
