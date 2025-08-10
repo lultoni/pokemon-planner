@@ -8,6 +8,8 @@ import json
 import os
 from typing import List, Optional, Dict, Tuple, Any, Set
 
+import global_infos
+
 
 def fetch_raw_wikitext(pokemon_name: str) -> Optional[str]:
     url = f"https://www.pokewiki.de/index.php?title={pokemon_name}&action=edit"
@@ -490,7 +492,7 @@ def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]:
     }
 
 
-def save_to_cache(pokemon_name: str, data: Dict, filename: str = "information_storage/pokemon_knowledge_cache.json"):
+def save_to_cache(pokemon_name: str, data: Dict, filename: str = global_infos.POKEMON_CACHE_FILE_PATH):
     if os.path.exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
             cache = json.load(f)
