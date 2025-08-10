@@ -1,39 +1,13 @@
 import sys
+
+import global_infos
+import information_manager
 import type_effectiveness
 
 # --- Hauptlogik ---
 
 # Laden der Typentabelle
 type_chart = type_effectiveness.load_type_effectiveness_data()
-
-# TODO remove this and replace it with a global infos check
-# Liste der verteidigenden Pokémon (Name, Typen-Tupel)
-name_liste = (
-    ("Vulnona", ("Feuer",)),
-    ("Rexblisar", ("Pflanze", "Eis")),
-    ("Flunschlik", ("Boden", "Stahl")),
-    ("Golgantes", ("Geist", "Boden")),
-    ("Strepoli", ("Kampf",)),
-    ("Piondragi", ("Gift", "Unlicht")),
-    ("Intelleon", ("Wasser",)),
-    ("Psiaugon", ("Psycho",)),
-    ("Smogon", ("Gift",)),
-    ("Schalellos", ("Wasser",)),
-    ("Olangaar", ("Unlicht", "Fee")),
-    ("Maritellit", ("Käfer", "Psycho")),
-    ("Barrakiefa", ("Wasser",)),
-    ("Garados", ("Wasser", "Flug")),
-    ("Irokex", ("Unlicht", "Kampf")),
-    ("Salanga", ("Boden",)),
-    ("Schlaraffel", ("Normal",)),
-    ("Laukaps", ("Käfer",)),
-    ("Bronzong", ("Stahl", "Psycho")),
-    ("Snomnom", ("Eis", "Käfer")),
-    ("Keifel", ("Eis", "Boden")),
-    ("Wailmer", ("Wasser",)),
-    ("Kingler", ("Wasser",)),
-    ("Rizeros", ("Boden", "Gestein")),
-)
 
 # TODO replace this with an access to fight data
 # Liste der angreifenden Pokémon (Name, Attacken-Typen-Tupel)
@@ -78,14 +52,14 @@ if type_chart:
         effectiveness_for_this_attacker = {}
 
         # Gehe jedes verteidigende Pokémon durch
-        for defender_name, defender_types in name_liste:
+        for defender_name in global_infos.owned_pokemon_list:
             # Initialisiere das Dictionary für die Effektivitäten der Attacken dieses Angreifers gegen diesen Verteidiger
             effectiveness_per_move = {}
 
             # Gehe jede Attacke des aktuellen Angreifers durch
             for attack_type in attacker_move_types:
                 # Ermittle die Effektivität dieser Attacke gegen den Verteidiger
-                effectiveness = type_effectiveness.get_effectiveness(type_chart, attack_type, defender_types)
+                effectiveness = type_effectiveness.get_effectiveness(type_chart, attack_type, information_manager.get_type_of_pokemon(defender_name))
 
                 # Speichere die Effektivität (oder 'N/A' bei Fehler)
                 if effectiveness is None:
@@ -159,9 +133,9 @@ if type_chart:
 
             # Finde die Typen des Verteidigers für die Ausgabe (unverändert)
             defender_types_str = ""
-            for d_name, d_types in name_liste:
+            for d_name in global_infos.owned_pokemon_list:
                 if d_name == defender_name:
-                    defender_types_str = f" {d_types}"
+                    defender_types_str = f" {information_manager.get_type_of_pokemon(d_name)}"
                     break
 
             # Gib die Zeile für den Verteidiger aus

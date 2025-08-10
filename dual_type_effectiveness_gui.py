@@ -5,12 +5,6 @@ import os
 import global_infos
 from type_effectiveness import load_type_effectiveness_data, get_type_matchups
 
-EFFECT_GROUPS = [0.0, 0.25, 0.5, 1.0, 2.0, 4.0]
-EFFECT_LABELS = ["0×", "¼×", "½×", "1×", "2×", "4×"]
-
-ICON_FOLDER = "type_icons"
-ICON_FILENAME_PATTERN = "Typ-Icon_{typ}_KAPU.png"
-
 class TypeEffectivenessApp:
     def __init__(self, root):
         self.root = root
@@ -35,11 +29,11 @@ class TypeEffectivenessApp:
 
     def load_type_icons(self):
         for typ in global_infos.pokemon_types:
-            normal_path = os.path.join(ICON_FOLDER, ICON_FILENAME_PATTERN.format(typ=typ))
-            faded_path = os.path.join(ICON_FOLDER, ICON_FILENAME_PATTERN.format(typ=typ).replace(".png", "_faded.png"))
+            normal_path = os.path.join(TYPE_ICON_FOLDER, TYPE_ICON_FILENAME_PATTERN.format(typ=typ))
+            faded_path = os.path.join(TYPE_ICON_FOLDER, TYPE_ICON_FILENAME_PATTERN.format(typ=typ).replace(".png", "_faded.png"))
             try:
                 self.tk_images[typ] = tk.PhotoImage(file=normal_path)
-                self.inactive_tk_images[typ] = tk.PhotoImage(file=faded_path)  # TODO: faded_path nach Bildanpassung verwenden
+                self.inactive_tk_images[typ] = tk.PhotoImage(file=faded_path)
             except Exception as e:
                 print(f"Fehler beim Laden der Icons für {typ}: {e}")
                 self.tk_images[typ] = None
@@ -81,7 +75,7 @@ class TypeEffectivenessApp:
         self.table_frame = ttk.LabelFrame(self.root, text="Effektivitäten")
         self.table_frame.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
 
-        for col, label in enumerate(EFFECT_LABELS):
+        for col, label in enumerate(EFFECTIVENESS_LABELS):
             header = ttk.Label(self.table_frame, text=label, font=("Arial", 12, "bold"))
             header.grid(row=0, column=col, padx=10, pady=5)
             self.result_labels[label] = []
@@ -135,11 +129,11 @@ class TypeEffectivenessApp:
 
         matchups = get_type_matchups(self.type_chart, defense)
 
-        groups = {key: [] for key in EFFECT_GROUPS}
+        groups = {key: [] for key in EFFECTIVENESS_GROUPS}
         for typ, value in matchups.items():
             groups.setdefault(value, []).append(typ)
 
-        for col_index, multiplier in enumerate(EFFECT_GROUPS):
+        for col_index, multiplier in enumerate(EFFECTIVENESS_GROUPS):
             typelist = groups.get(multiplier, [])
             for row_index, typ in enumerate(typelist):
                 icon = self.tk_images.get(typ)
@@ -148,7 +142,7 @@ class TypeEffectivenessApp:
                 lbl = tk.Label(self.table_frame, image=icon)
                 lbl.image = icon
                 lbl.grid(row=row_index + 1, column=col_index, padx=2, pady=1)
-                self.result_labels[EFFECT_LABELS[col_index]].append(lbl)
+                self.result_labels[EFFECTIVENESS_LABELS[col_index]].append(lbl)
 
 def main():
     root = tk.Tk()

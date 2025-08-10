@@ -504,12 +504,9 @@ def save_to_cache(pokemon_name: str, data: Dict, filename: str = "information_st
     print(f"✅ {pokemon_name} wurde gespeichert.")
 
 
-def main():
-    poki_name = "Zigzachs"
-    entry = build_pokemon_entry(poki_name)
+def get_pokemon_from_wiki(pokemon_name: str):
+    entry = build_pokemon_entry(pokemon_name)
     if entry:
-        save_to_cache(poki_name, entry)
-
-
-if __name__ == "__main__":
-    main()
+        save_to_cache(pokemon_name, entry)
+        return entry
+    return None

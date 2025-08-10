@@ -5,27 +5,10 @@ from collections import defaultdict
 from typing import List, Dict, Any, Optional, Callable, Tuple
 from bs4 import BeautifulSoup
 
-import global_infos
+from global_infos import *
 import type_effectiveness
 
-# --------------- GLOBAL VARS ---------------
-fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
-global_level_cap = 70
-grouping_key = "Art"
-minimum_strength_move = 70
-ALLOW_TP_MOVES = False
-# filter funktion wird nach der gegnerischen team analyse unten gemacht
-def filter_funktion_error(atk):
-    # Beispiel: Suche nach Stahl-Attacken, die keine Status-Attacken sind
-    return ((atk['Typ'] == 'Stahl'
-            and atk['Kategorie'] != 'Status'
-            and is_strong_enough(atk['Stärke'], minimum_strength_move))
-            and is_allowed_level(atk['Level']))
-trainer_name = "asdf"
-backup_typen = ['Geist', 'Unlicht', 'Feuer', 'Boden']
-
 # --------------- FUNCTION DEFINITIONS ---------------
-
 
 def is_allowed_level(level):
     if ALLOW_TP_MOVES:
@@ -445,8 +428,8 @@ print("--- Analyse EIGENER Pokémon (aus global_infos.owned_pokemon_list) ---")
 alle_eigenen_erfuellen_kriterium = True
 pokemon_daten_eigen = []
 
-if global_infos.owned_pokemon_list: # Nur ausführen, wenn die Liste nicht leer ist
-    for pokemon_name in global_infos.owned_pokemon_list:
+if owned_pokemon_list: # Nur ausführen, wenn die Liste nicht leer ist
+    for pokemon_name in owned_pokemon_list:
         level_cap = global_level_cap
         pokemon_typen = get_pokemon_typen_from_wiki(pokemon_name)
         typen_str = "/".join(pokemon_typen) if pokemon_typen else "Typ unbekannt"
@@ -478,10 +461,10 @@ else:
 
 # Zusammenfassung für eigene Pokémon
 print("\n----------------------------------------------")
-if not global_infos.owned_pokemon_list:
+if not owned_pokemon_list:
     print("ℹ️ Keine eigenen Pokémon analysiert.")
 elif alle_eigenen_erfuellen_kriterium:
-    print(f"✅ Alle eigenen Pokémon ({len(global_infos.owned_pokemon_list)}) scheinen mindestens eine passende Attacke gemäß Filter zu haben.")
+    print(f"✅ Alle eigenen Pokémon ({len(owned_pokemon_list)}) scheinen mindestens eine passende Attacke gemäß Filter zu haben.")
 else:
     print(f"❌ Mindestens ein eigenes Pokémon hat KEINE passende Attacke gemäß Filter.")
 print("----------------------------------------------\n")
@@ -496,7 +479,7 @@ print("==============================================")
 # eigene Pokémon als auch das (gefundene oder angenommene) Gegnerteam berücksichtigt.
 
 # Beispielhafte einfache Zusammenfassung basierend auf dem ursprünglichen Skript-Ziel:
-if not global_infos.owned_pokemon_list:
+if not owned_pokemon_list:
     pass # Bereits oben behandelt
 elif alle_eigenen_erfuellen_kriterium:
     print("✅ Alle EIGENEN Pokémon scheinen (basierend auf dem initialen Filter) passende Attacken zu haben.")
