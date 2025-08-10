@@ -24,10 +24,9 @@ def fetch_raw_wikitext(pokemon_name: str) -> Optional[str]:
             if typ_schwaechen_match:
                 # Schneide den Text ab, bevor die Überschrift "Typ-Schwächen" beginnt
                 cut_wikitext = wikitext[:typ_schwaechen_match.start()]
-                print("✅ Wikitext für Typ-Extraktion erfolgreich gekürzt.")
                 return cut_wikitext
 
-            print("✅ Wikitext gefunden, aber keine 'Typ-Schwächen'-Sektion. Rückgabe des vollständigen Textes.")
+            print("⚠️ Wikitext gefunden, aber keine 'Typ-Schwächen'-Sektion. Rückgabe des vollständigen Textes.")
             return wikitext
 
         print(f"❌ Kein Wikitext für {pokemon_name} gefunden.")
@@ -45,12 +44,15 @@ def extract_value(text: str, key: str) -> Optional[str]:
         raw_value = match.group(1)
         cleaned_value = raw_value.strip().replace("[[", "").replace("]]", "")
         return cleaned_value
-    print(f"DEBUG: Key '{key}' not found.")
     return None
 
 
-def extract_statuswerte(text: str) -> Dict[str, int]:
-    werte = {
+def extract_statuswerte(text: str, pokemon_name: str) -> Dict[str, int]:
+    """
+    Extrahiert Statuswerte für das angegebene Pokémon.
+    Unterstützt Standardform, Regionsform oder nur einen Block ohne Namenszeile.
+    """
+    werte_keys = {
         "KP": "kp_basis",
         "Angriff": "angr_basis",
         "Verteidigung": "vert_basis",
@@ -58,15 +60,44 @@ def extract_statuswerte(text: str) -> Dict[str, int]:
         "SpVerteidigung": "spvert_basis",
         "Initiative": "init_basis"
     }
+
+    # Region erkennen (Format: "Region-Name")
+    region = None
+    base_name = pokemon_name
+    if "-" in pokemon_name:
+        parts = pokemon_name.split("-", 1)
+        if len(parts) == 2:
+            region, base_name = parts
+
+    # Passenden Abschnitt suchen
+    section_pattern = None
+    if region:
+        section_pattern = rf";{region}-{base_name}\s*\n\{{\{{Statuswerte.*?\n\}}\}}"
+    else:
+        section_pattern = rf";{base_name}\s*\n\{{\{{Statuswerte.*?\n\}}\}}"
+
+    match = re.search(section_pattern, text, re.DOTALL)
+
+    # Fallback: erster Statuswerte-Block im Text
+    if not match:
+        match = re.search(r"\{\{Statuswerte.*?\n\}\}", text, re.DOTALL)
+
+    if not match:
+        return {}  # Kein Block gefunden
+
+    section_text = match.group(0)
+
+    # Werte extrahieren
     result = {}
-    for name, key in werte.items():
-        val = extract_value(text, key)
+    for name, key in werte_keys.items():
+        val = extract_value(section_text, key)
         if val and val.isdigit():
             result[name] = int(val)
+
     return result
 
 
-def extract_entwicklungen(text: str) -> Dict[str, str]:
+def extract_entwicklungen(text: str) -> Dict[str, str]: # todo test
     entwicklungen = {}
     match1 = re.search(r'Stufe1\|(\d+)\|.*?\[\[([^\]]+)\]\]', text)
     match2 = re.search(r'Stufe2\|(\d+)\|.*?Level[^0-9]*(\d+)', text)
@@ -130,7 +161,7 @@ def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]: # todo test
     typen = extract_typen(text)
     entwicklungen = extract_entwicklungen(text)
     faehigkeiten = extract_faehigkeiten(text)
-    statuswerte = extract_statuswerte(text)
+    statuswerte = extract_statuswerte(text, pokemon_name)
     fangrate = extract_fangrate(text)
     eigruppen = extract_eigruppen(text)
 
@@ -167,7 +198,7 @@ def save_to_cache(pokemon_name: str, data: Dict, filename: str = "information_st
 
 
 def main():
-    poki_name = "Vulnona"
+    poki_name = "Zigzachs"
     entry = build_pokemon_entry(poki_name)
     if entry:
         save_to_cache(poki_name, entry)

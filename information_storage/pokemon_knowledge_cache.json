@@ -1,24 +1,29 @@
 {
-    "Vulnona": {
+    "Zigzachs": {
         "Typen": [
-            "Feuer"
+            "Unlicht",
+            "Normal"
         ],
         "Entwicklungen": {
-            "Vorentwicklung1": "Zucht"
+            "Vorentwicklung1": "Zucht",
+            "Vorentwicklung2": "Sharfax",
+            "Level1": 20,
+            "Level2": 35
         },
         "Faehigkeiten": [
-            "Feuerfänger"
+            "Mitnahme",
+            "Völlerei"
         ],
-        "VersteckteFaehigkeit": "Dürre",
+        "VersteckteFaehigkeit": "Rasanz",
         "Statuswerte": {
-            "KP": 73,
-            "Angriff": 76,
-            "Verteidigung": 75,
-            "SpAngriff": 81,
-            "SpVerteidigung": 100,
-            "Initiative": 100
+            "KP": 38,
+            "Angriff": 30,
+            "Verteidigung": 41,
+            "SpAngriff": 30,
+            "SpVerteidigung": 41,
+            "Initiative": 60
         },
-        "Fangrate": 75,
+        "Fangrate": 255,
         "Fundorte": {},
         "Attacken": {
             "LevelUp": [],
