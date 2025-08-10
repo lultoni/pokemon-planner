@@ -6,7 +6,7 @@ import requests
 import re
 import json
 import os
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict, Tuple, Any, Set
 
 
 def fetch_raw_wikitext(pokemon_name: str) -> Optional[str]:
@@ -35,6 +35,181 @@ def fetch_raw_wikitext(pokemon_name: str) -> Optional[str]:
     except Exception as e:
         print(f"❌ Fehler beim Abrufen von {pokemon_name}: {e}")
     return None
+
+
+def fetch_attack_page_wikitext(pokemon_name: str) -> str:
+    """Ruft den reinen Wiki-Markup-Text von der /Attacken-Unterseite eines Pokémon ab."""
+    url = f"https://www.pokewiki.de/index.php?title={pokemon_name}/Attacken&action=edit"
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Fehler beim Abrufen der Attacken-Seite für {pokemon_name}: {e}")
+        return ""
+
+    match = re.search(r'<textarea[^>]+id="wpTextbox1"[^>]*>(.*?)</textarea>', response.text, re.DOTALL)
+    if not match:
+        print(f"Textarea für Attacken von {pokemon_name} nicht gefunden.")
+        return ""
+
+    return match.group(1).replace('&amp;nbsp;', ' ').replace('&nbsp;', ' ')
+
+
+def extract_structured_attacks(wikitext: str) -> Dict[str, List[Any]]:
+    """
+    Extrahiert Attacken aus dem Wiki-Markup und strukturiert sie nach LevelUp, TM, Ei und Tutor.
+    Fokussiert sich auf Daten der 8. Generation (g=8).
+    """
+    # Das finale Daten-Objekt initialisieren
+    attacken = {
+        "LevelUp": [],
+        "TM": [],
+        "Ei": [],
+        "Tutor": []
+    }
+
+    # Sets zur Vermeidung von Duplikaten
+    unique_checks: Dict[str, Set[Any]] = {
+        "LevelUp": set(),
+        "TM": set(),
+        "Ei": set(),
+        "Tutor": set()
+    }
+
+    if not wikitext:
+        return attacken
+
+    # Alle Attacken-Tabellen für Generation 8 (g=8) finden
+    gen8_tables = re.findall(r'\{\{Atk-Table\|g=8\|Art=([^\|}]+)(.*?)\}\}(.*?)(?=\{\{Atk-Table|\Z)', wikitext, re.DOTALL)
+
+    for art, _params, content in gen8_tables:
+        art_clean = art.strip().lower()
+
+        # Attacken-Zeilen in der aktuellen Tabelle finden
+        atk_rows = re.findall(r'\{\{AtkRow\s*\|([^\|}]+)\|([^\|}]+)', content)
+
+        for row in atk_rows:
+            source_info = row[0].strip()
+            name_raw = row[1].strip()
+
+            # Reinen Attackennamen extrahieren
+            name_match = re.search(r'\[\[(?:[^|]+\|)?([^\]]+)\]\]', name_raw)
+            name = name_match.group(1).strip() if name_match else name_raw
+
+            # todo überprüfen, ob die attacke schon in attack_cache ist
+
+            # Attacken in die richtige Kategorie einordnen
+            # ----- LevelUp-Attacken -----
+            if art_clean == 'level':
+                level = 1 if source_info.lower() == 'start' or not source_info else int(source_info)
+                attack_data = {"Level": level, "Name": name}
+                # Duplikat-Schlüssel: (Level, Name)
+                if (level, name) not in unique_checks["LevelUp"]:
+                    attacken["LevelUp"].append(attack_data)
+                    unique_checks["LevelUp"].add((level, name))
+
+            # ----- TM/TP-Attacken -----
+            elif art_clean == 'tmtp':
+                tm_type = "TM" if "TM" in source_info else "TP"
+                tm_num = ''.join(filter(str.isdigit, source_info))
+                attack_data = {"Art": tm_type, "Nummer": tm_num, "Name": name}
+                # Duplikat-Schlüssel: (Art, Nummer, Name)
+                if (tm_type, tm_num, name) not in unique_checks["TM"]:
+                    attacken["TM"].append(attack_data)
+                    unique_checks["TM"].add((tm_type, tm_num, name))
+
+            # ----- Ei-Attacken (Zucht) -----
+            elif art_clean == 'zucht':
+                # Duplikat-Schlüssel: Name
+                if name not in unique_checks["Ei"]:
+                    attacken["Ei"].append(name)
+                    unique_checks["Ei"].add(name)
+
+            # ----- Tutor-Attacken (Lehrer, Meisterung) -----
+            elif art_clean in ['lehrer', 'meisterung']:
+                # Duplikat-Schlüssel: Name
+                if name not in unique_checks["Tutor"]:
+                    attacken["Tutor"].append(name)
+                    unique_checks["Tutor"].add(name)
+
+    # LevelUp-Attacken nach Level sortieren
+    attacken["LevelUp"] = sorted(attacken["LevelUp"], key=lambda x: x['Level'])
+
+    return attacken
+
+
+def extract_id(text: str) -> Optional[int]:
+    val = extract_value(text, "Nr")
+    return val
+
+
+def clean_wikitext(text: str) -> str:
+    """
+    Bereinigt einen Wikitext-String von häufigen Formatierungen.
+    - Entfernt <small>-Tags und deren Inhalt.
+    - Löst Wikilinks ([[Link|Text]] oder [[Link]]) auf den sichtbaren Text auf.
+    - Entfernt verbleibende Vorlagen {{...}}.
+    - Ersetzt <br /> durch ein Komma.
+    - Entfernt Anmerkungen in Klammern.
+    """
+    # <small>...</small> entfernen
+    text = re.sub(r'<small>.*?</small>', '', text, flags=re.DOTALL)
+
+    # Wikilinks auflösen: [[Page|Display Text]] -> Display Text, [[Page]] -> Page
+    text = re.sub(r'\[\[(?:[^|\]]+\|)?([^\]]+)\]\]', r'\1', text)
+
+    # Verbleibende Vorlagen wie {{tt|...}} entfernen
+    text = re.sub(r'\{\{.*?\}\}', '', text)
+
+    # HTML-Zeilenumbruch durch Komma ersetzen
+    text = text.replace('<br />', ',')
+
+    # Anmerkungen in Klammern entfernen, z.B. (einmalig, schillernd)
+    text = re.sub(r'\s*\([^)]*\)', '', text)
+
+    # Übrig gebliebene HTML-Tags und unnötige Zeichen entfernen
+    text = re.sub(r'<[^>]+>', '', text)
+
+    return text.strip()
+
+
+def extract_sword_locations(text: str) -> List[str]: # TODO fix this code
+    """
+    Extrahiert die Fundorte für Pokémon Schwert (SW) aus dem Wikitext.
+
+    Die Funktion sucht gezielt nach "Fundorte"-Abschnitten und filtert die Zeilen,
+    die explizit für die Edition "SW" gelten. Die extrahierten Orte werden
+    von Wikitext-Formatierungen bereinigt.
+    """
+    # Alle "Fundorte"-Abschnitte im gesamten Text finden
+    # (?====|===|$) sorgt dafür, dass der Abschnitt bei der nächsten Überschrift endet
+    fundorte_sections = re.findall(r'==== Fundorte ====(.*?)(?====|===|\Z)', text, re.DOTALL)
+
+    all_locations = []
+
+    for section in fundorte_sections:
+        # Finde alle Zeilen, die eine Fundort-Vorlage enthalten
+        lines = re.findall(r'\{\{Fangorte/Zeile/Pokémon.*?\}\}', section)
+
+        for line in lines:
+            # Überprüfen, ob die Zeile für Pokémon Schwert (SW) gilt.
+            # \bSW\b stellt sicher, dass nicht "SWEX" fälschlicherweise gefunden wird.
+            if re.search(r'\|\s*sp\d*\s*=\s*SW\b', line):
+
+                # Den Inhalt des 'ort'-Parameters extrahieren
+                match = re.search(r'ort\s*=\s*(.*?)\s*(?:\||\}\})', line)
+                if match:
+                    wikitext_locations = match.group(1)
+
+                    # Wikitext bereinigen
+                    cleaned_locations_str = clean_wikitext(wikitext_locations)
+
+                    # Orte sind oft mit Kommas getrennt, aufteilen und zur Liste hinzufügen
+                    locations = [loc.strip() for loc in cleaned_locations_str.split(',') if loc.strip()]
+                    all_locations.extend(locations)
+
+    # Duplikate entfernen, aber die Reihenfolge beibehalten
+    return list(dict.fromkeys(all_locations))
 
 
 def extract_value(text: str, key: str) -> Optional[str]:
@@ -274,43 +449,43 @@ def extract_faehigkeiten(text: str, pokemon_name: str) -> Dict[str, List[str] | 
     }
 
 
-def extract_fangrate(text: str) -> int: # todo test
+def extract_fangrate(text: str) -> int:
     val = extract_value(text, "Fangrate")
     return int(val) if val and val.isdigit() else 0
 
 
-def extract_eigruppen(text: str) -> List[str]: # todo test
+def extract_eigruppen(text: str) -> List[str]:
     g1 = extract_value(text, "Ei-Gruppe")
     g2 = extract_value(text, "Ei-Gruppe2")
     return [g for g in [g1, g2] if g]
 
 
-def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]: # todo test
+def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]:
     text = fetch_raw_wikitext(pokemon_name)
+    attack_text = fetch_attack_page_wikitext(pokemon_name)
     if not text:
         return None
 
+    id = extract_id(text)
     typen = extract_typen(text)
     entwicklungen = extract_entwicklungen(text, None)
     faehigkeiten = extract_faehigkeiten(text, pokemon_name)
     statuswerte = extract_statuswerte(text, pokemon_name)
     fangrate = extract_fangrate(text)
+    fundorte = extract_sword_locations(text)
+    attacken = extract_structured_attacks(attack_text)
     eigruppen = extract_eigruppen(text)
 
     return {
+        "ID": id,
         "Typen": typen,
         "Entwicklungen": entwicklungen,
         "Faehigkeiten": faehigkeiten["Faehigkeiten"],
         "VersteckteFaehigkeit": faehigkeiten["VersteckteFaehigkeit"],
         "Statuswerte": statuswerte,
         "Fangrate": fangrate,
-        "Fundorte": {}, # todo append with function
-        "Attacken": { # todo append with function
-            "LevelUp": [],
-            "TM": [],
-            "Ei": [],
-            "Tutor": []
-        },
+        "Fundorte": fundorte,
+        "Attacken": attacken,
         "EiGruppen": eigruppen
     }
 
@@ -330,7 +505,7 @@ def save_to_cache(pokemon_name: str, data: Dict, filename: str = "information_st
 
 
 def main():
-    poki_name = "Lavados"
+    poki_name = "Zigzachs"
     entry = build_pokemon_entry(poki_name)
     if entry:
         save_to_cache(poki_name, entry)

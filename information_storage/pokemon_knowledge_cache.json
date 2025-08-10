@@ -1,32 +1,531 @@
 {
-    "Lavados": {
+    "Zigzachs": {
+        "ID": "263",
         "Typen": [
             "Unlicht",
-            "Flug"
+            "Normal"
         ],
-        "Entwicklungen": [],
+        "Entwicklungen": [
+            {
+                "Stufe": 1,
+                "ID": "263",
+                "Name": "None",
+                "Level": null,
+                "Item": "Ewigstein",
+                "Zeit": null,
+                "Region": "Galar",
+                "Generation": null,
+                "Methode": "schlüpft bei [[Zucht]] außerhalb von [[Galar]] aus einem [[Ei]] * schlüpft bei [[Zucht]] durch [[Zucht#Form|Formvererbung]] in [[Galar]] nur mittels getragenem [[Ewigstein]] aus einem [[Ei]] (seit [[Spielgeneration|Gen.]] {{G|8"
+            },
+            {
+                "Stufe": 2,
+                "ID": "264",
+                "Name": "None",
+                "Level": 20,
+                "Item": null,
+                "Zeit": null,
+                "Region": null,
+                "Generation": null,
+                "Methode": "ab [[Level]]&amp;nbsp;20"
+            },
+            {
+                "Stufe": 1,
+                "ID": "263a",
+                "Name": "None",
+                "Level": null,
+                "Item": null,
+                "Zeit": null,
+                "Region": "Galar",
+                "Generation": null,
+                "Methode": "schlüpft bei [[Zucht]] in [[Galar]] aus einem [[Ei]] (seit [[Spielgeneration|Gen.]] {{G|8"
+            },
+            {
+                "Stufe": 2,
+                "ID": "264a",
+                "Name": "None",
+                "Level": 20,
+                "Item": null,
+                "Zeit": null,
+                "Region": null,
+                "Generation": null,
+                "Methode": "ab [[Level]]&amp;nbsp;20"
+            },
+            {
+                "Stufe": 3,
+                "ID": "862",
+                "Name": "None",
+                "Level": 35,
+                "Item": null,
+                "Zeit": "nachts",
+                "Region": null,
+                "Generation": null,
+                "Methode": "ab [[Level]]&amp;nbsp;35, [[Zeit|nachts]]"
+            }
+        ],
         "Faehigkeiten": [
-            "Wutausbruch"
+            "Mitnahme",
+            "Völlerei"
         ],
-        "VersteckteFaehigkeit": "Flammkörper",
+        "VersteckteFaehigkeit": "Rasanz",
         "Statuswerte": {
-            "KP": 90,
-            "Angriff": 100,
-            "Verteidigung": 90,
-            "SpAngriff": 125,
-            "SpVerteidigung": 85,
-            "Initiative": 90
+            "KP": 38,
+            "Angriff": 30,
+            "Verteidigung": 41,
+            "SpAngriff": 30,
+            "SpVerteidigung": 41,
+            "Initiative": 60
         },
-        "Fangrate": 3,
-        "Fundorte": {},
+        "Fangrate": 255,
+        "Fundorte": [
+            "Tausch",
+            "[[Route 2"
+        ],
         "Attacken": {
-            "LevelUp": [],
-            "TM": [],
+            "LevelUp": [
+                {
+                    "Level": 1,
+                    "Name": "Heuler"
+                },
+                {
+                    "Level": 1,
+                    "Name": "Silberblick"
+                },
+                {
+                    "Level": 3,
+                    "Name": "Sandwirbel"
+                },
+                {
+                    "Level": 6,
+                    "Name": "Rutenschlag"
+                },
+                {
+                    "Level": 6,
+                    "Name": "Schlecker"
+                },
+                {
+                    "Level": 9,
+                    "Name": "Bezirzer"
+                },
+                {
+                    "Level": 9,
+                    "Name": "Standpauke"
+                },
+                {
+                    "Level": 12,
+                    "Name": "Kopfnuss"
+                },
+                {
+                    "Level": 15,
+                    "Name": "Kulleraugen"
+                },
+                {
+                    "Level": 18,
+                    "Name": "Nadelrakete"
+                },
+                {
+                    "Level": 21,
+                    "Name": "Erholung"
+                },
+                {
+                    "Level": 24,
+                    "Name": "Bodycheck"
+                },
+                {
+                    "Level": 27,
+                    "Name": "Schleuder"
+                },
+                {
+                    "Level": 27,
+                    "Name": "Grimasse"
+                },
+                {
+                    "Level": 30,
+                    "Name": "Dreschflegel"
+                },
+                {
+                    "Level": 30,
+                    "Name": "Konter"
+                },
+                {
+                    "Level": 33,
+                    "Name": "Bauchtrommel"
+                },
+                {
+                    "Level": 33,
+                    "Name": "Verhöhner"
+                },
+                {
+                    "Level": 36,
+                    "Name": "Risikotackle"
+                }
+            ],
+            "TM": [
+                {
+                    "Art": "TM",
+                    "Nummer": "14",
+                    "Name": "Donnerwelle"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "15",
+                    "Name": "Schaufler"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "21",
+                    "Name": "Erholung"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "23",
+                    "Name": "Raub"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "24",
+                    "Name": "Schnarcher"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "25",
+                    "Name": "Schutzschild"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "27",
+                    "Name": "Eissturm"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "29",
+                    "Name": "Charme"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "31",
+                    "Name": "Anziehung"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "33",
+                    "Name": "Regentanz"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "34",
+                    "Name": "Sonnentag"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "36",
+                    "Name": "Whirlpool"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "39",
+                    "Name": "Fassade"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "40",
+                    "Name": "Sternschauer"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "41",
+                    "Name": "Rechte Hand"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "53",
+                    "Name": "Lehmschuss"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "59",
+                    "Name": "Schleuder"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "76",
+                    "Name": "Kanon"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "79",
+                    "Name": "Heimzahlung"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "84",
+                    "Name": "Kehrschelle"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "01",
+                    "Name": "Bodyslam"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "04",
+                    "Name": "Surfer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "05",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "06",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "08",
+                    "Name": "Donnerblitz"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "09",
+                    "Name": "Donner"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "20",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "26",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "27",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "31",
+                    "Name": "Eisenschweif"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "33",
+                    "Name": "Spukball"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "38",
+                    "Name": "Trickbetrug"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "42",
+                    "Name": "Schallwelle"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "59",
+                    "Name": "Samenbomben"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "73",
+                    "Name": "Mülltreffer"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "77",
+                    "Name": "Strauchler"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "85",
+                    "Name": "Kraftschub"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "10",
+                    "Name": "Kraftschub"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "11",
+                    "Name": "Sonnentag"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "13",
+                    "Name": "Eisstrahl"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "14",
+                    "Name": "Blizzard"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "17",
+                    "Name": "Schutzschild"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "18",
+                    "Name": "Regentanz"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "23",
+                    "Name": "Eisenschweif"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "24",
+                    "Name": "Donnerblitz"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "25",
+                    "Name": "Donner"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "28",
+                    "Name": "Schaufler"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "30",
+                    "Name": "Spukball"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "32",
+                    "Name": "Doppelteam"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "34",
+                    "Name": "Schockwelle"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "42",
+                    "Name": "Fassade"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "44",
+                    "Name": "Erholung"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "45",
+                    "Name": "Anziehung"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "46",
+                    "Name": "Raub"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "56",
+                    "Name": "Schleuder"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "57",
+                    "Name": "Ladestrahl"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "58",
+                    "Name": "Ausdauer"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "73",
+                    "Name": "Donnerwelle"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "82",
+                    "Name": "Schlafrede"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "86",
+                    "Name": "Strauchler"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "87",
+                    "Name": "Angeberei"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "90",
+                    "Name": "Delegator"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "93",
+                    "Name": "Zerschneider"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "95",
+                    "Name": "Surfer"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "98",
+                    "Name": "Zertrümmerer"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "16",
+                    "Name": "Kreideschrei"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "26",
+                    "Name": "Grimasse"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "47",
+                    "Name": "Trugträne"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "57",
+                    "Name": "Gegenstoß"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "58",
+                    "Name": "Gewissheit"
+                },
+                {
+                    "Art": "TM",
+                    "Nummer": "85",
+                    "Name": "Standpauke"
+                },
+                {
+                    "Art": "TP",
+                    "Nummer": "37",
+                    "Name": "Verhöhner"
+                }
+            ],
             "Ei": [],
             "Tutor": []
         },
         "EiGruppen": [
-            "Unbekannt"
+            "Feld"
         ]
     }
 }
