@@ -55,7 +55,10 @@ starter_pokemon_list = [
     "Memmeon", "Phlegleon", "Intelleon"
 ]
 
-# Kann entweder 0, 3 oder 6 sein.
+# Kann 1 von diesen 3 sein:
+# - 0 (Pflanze)
+# - 3 (Feuer)
+# - 6 (Wasser)
 starter_pokemon = starter_pokemon_list[6]
 
 owned_pokemon_list = [

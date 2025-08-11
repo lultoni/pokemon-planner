@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 import attack_web_scraper
 import global_infos
+import id_to_name_generator
 from pokemon_web_scraper import get_pokemon_from_wiki
 
 def get_type_of_pokemon(name: str) -> Optional[List[str]]:
@@ -139,3 +140,6 @@ def get_attacken_of_pokemon_structured(pokemon_name: str, max_level: Optional[in
 
     return list(unique_attacks.values())
 
+
+def get_name_from_id(id: str):
+    return id_to_name_generator.get_german_name_by_id(id)
