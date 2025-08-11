@@ -38,6 +38,33 @@ def _parse_power(own_move_name, own_move):
     # Default für unbekannte
     return global_infos.default_strength_move
 
+def _parse_accuracy(move_name: str, move_data: dict) -> float:
+    """
+    Ermittelt die Genauigkeit einer Attacke als Float-Wert (z.B. 95 -> 0.95).
+    Behandelt spezielle Fälle und Standardwerte.
+    """
+    # Wenn keine Move-Daten vorhanden sind, nehmen wir einen sicheren Standardwert an.
+    if not move_data:
+        return 0.7  # Allgemeiner Standardwert
+
+    accuracy_str = move_data.get("Genauigkeit")
+
+    if accuracy_str and accuracy_str.isdigit():
+        return int(accuracy_str) / 100.0
+
+    # Spezielle Fälle aus deinem alten Code
+    if move_name == "Eiseskälte":
+        return 0.3 # Genauigkeit für OHKO-Moves ist 30%
+
+    # Wenn die Genauigkeit nicht numerisch oder nicht vorhanden ist (z.B. "---"),
+    # bedeutet das oft, dass die Attacke immer trifft (z.B. Aero-Ass).
+    # Wir nehmen hier 1.0 (100%) an.
+    if not accuracy_str or accuracy_str == '---':
+        return 1.0
+
+    # Fallback für andere nicht-numerische Werte
+    return 0.85 # Sicherer Standardwert, wenn etwas Unerwartetes passiert
+
 def _infer_category_from_base(atk_stats):
     """
     Kleine Heuristik: wenn Basis-Angriff größer als Basis-SpAngriff -> physical,
@@ -73,18 +100,22 @@ def determine_move_category(move_meta, move_in_cache, attacker_pkm):
     spatk = attacker_pkm["Statuswerte"].get("SpAngriff", 0)
     return "physisch" if atk >= spatk else "speziell"
 
-def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacker_moves_list):
+def compute_best_damage_for_pair(attacker_pkm, attacker_name, defender_pkm, attacker_moves_list):
     """
-    Berechnet für einen Angreifer (attacker_pkm) gegen einen Defender (defender_pkm)
-    den besten raw-Wert über alle Moves des Angreifers (ohne Accuracy/STAB).
+    Berechnet für einen Angreifer gegen einen Defender den besten *erwarteten Schaden*
+    über alle Moves, unter Einbeziehung von STAB und Genauigkeit.
     Gibt am Ende den Rechenweg für den besten gefundenen Move aus.
     """
-    best_raw = 0.0
-    # NEU: Ein Dictionary, um die Details der besten Berechnung zu speichern
+    # GEÄNDERT: Wir optimieren jetzt für den erwarteten Schaden
+    best_expected_damage = 0.0
     best_calculation_details = {}
 
     if not attacker_moves_list:
-        return best_raw
+        # GEÄNDERT: Passender Rückgabewert für den Fehlerfall
+        return 0.0, None
+
+    # NEU: Typen des Angreifers für STAB-Berechnung einmalig holen
+    attacker_types = attacker_pkm.get("Typen", [])
 
     for attack_list in attacker_moves_list:
         for move_meta in attack_list:
@@ -97,9 +128,15 @@ def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacke
                 power = _parse_power(move_name, move_in_cache)
                 move_type = move_in_cache.get("Typ")
             else:
-                print(f"Move not in Cache whilst computing raw damage - Name: {move_name}")
+                print(f"Move not in Cache whilst computing damage - Name: {move_name}")
                 power = global_infos.default_strength_move
                 move_type = None
+
+            # NEU: Genauigkeit der Attacke bestimmen
+            accuracy = _parse_accuracy(move_name, move_in_cache)
+
+            # NEU: STAB-Bonus bestimmen
+            stab_bonus = 1.5 if move_type in attacker_types else 1.0
 
             category = determine_move_category(move_meta, move_in_cache, attacker_pkm)
 
@@ -119,35 +156,46 @@ def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacke
             else:
                 eff = 1.0
 
-            raw = power * (attack_stat / defense_stat) * eff
+            # GEÄNDERT: Formel erweitert um STAB
+            raw_damage = power * (attack_stat / defense_stat) * eff * stab_bonus
+            # NEU: Berechnung des erwarteten Schadens
+            expected_damage = raw_damage * accuracy
 
-            # GEÄNDERT: Wenn ein besserer Raw-Wert gefunden wird, speichern wir alle Details
-            if raw > best_raw:
-                best_raw = raw
+            # GEÄNDERT: Vergleich basiert jetzt auf expected_damage
+            if expected_damage > best_expected_damage:
+                best_expected_damage = expected_damage
                 best_calculation_details = {
                     "move_name": move_name,
                     "power": power,
                     "attack_stat": attack_stat,
                     "defense_stat": defense_stat,
-                    "effectiveness": eff
+                    "effectiveness": eff,
+                    "stab_bonus": stab_bonus, # NEU im Dictionary
+                    "accuracy": accuracy,     # NEU im Dictionary
+                    "raw_damage": raw_damage  # NEU zur Anzeige
                 }
 
-    # NEU: Nach der Schleife, gib den besten Rechenweg aus, falls einer gefunden wurde
     if best_calculation_details:
         defender_name = information_manager.get_name_from_id(defender_pkm.get("ID"))
-        details = best_calculation_details # Nur zur besseren Lesbarkeit
+        details = best_calculation_details
 
-        print("\n--- Bester Raw-Damage ---")
+        # GEÄNDERT: Ausgabe erweitert
+        print("\n--- Bester erwarteter Schaden ---")
         print(f"Angreifer: {attacker_name}")
         print(f"Verteidiger: {defender_name}")
-        print(f"Attacke: {details['move_name']}")
-        print(f"Formel: power * (attack / defense) * effectiveness")
-        print(f"Werte: {details['power']} * ({details['attack_stat']} / {details['defense_stat']}) * {details['effectiveness']}")
-        print(f"Ergebnis: {best_raw:.2f}")
-        print("-------------------------\n")
+        print(f"Beste Attacke: {details['move_name']}")
+        print(f"Roher Schaden (vor Genauigkeit): {details['raw_damage']:.2f}")
+        print("-" * 20)
+        print(f"Formel: power * (att/def) * eff * STAB * accuracy")
+        print(f"Werte: {details['power']} * ({details['attack_stat']:.0f}/{details['defense_stat']:.0f}) * {details['effectiveness']} * {details['stab_bonus']} * {details['accuracy']}")
+        print(f"Erwarteter Schaden: {best_expected_damage:.2f}")
+        print("--------------------------------\n")
     else:
-        print("no data..?")
-    return best_raw, best_calculation_details['move_name']
+        # Sinnvollere Ausgabe, wenn keine Attacken gefunden wurden
+        print(f"Keine effektiven Attacken für {attacker_name} gegen {information_manager.get_name_from_id(defender_pkm.get('ID'))} gefunden.")
+
+    # GEÄNDERT: Gib den besten Schaden und den Namen der Attacke zurück
+    return best_expected_damage, best_calculation_details.get('move_name')
 
 def compute_utility_score_for_attacker(attacker_name, attacker_moves_list):
     """
@@ -281,7 +329,7 @@ def main():
                 opp_name = information_manager.get_name_from_id(opp_fight_data_pkm["id"])
                 opp_pkm = information_manager.get_pokemon_in_cache(opp_name)
 
-                best_raw, best_move = compute_best_raw_for_pair(own_pkm, own_pkm_name, opp_pkm, attacker_moves_list)
+                best_raw, best_move = compute_best_damage_for_pair(own_pkm, own_pkm_name, opp_pkm, attacker_moves_list)
                 raw_player_to_opponent[own_pkm_name][opp_name] = best_raw
                 best_move_player_to_opponent[own_pkm_name][opp_name] = best_move
 
@@ -297,7 +345,7 @@ def main():
             for own_pkm_name in owned_list:
                 own_pkm = information_manager.get_pokemon_in_cache(own_pkm_name)
 
-                best_raw, best_move = compute_best_raw_for_pair(opp_pkm, opp_name, own_pkm, attacker_moves_list)
+                best_raw, best_move = compute_best_damage_for_pair(opp_pkm, opp_name, own_pkm, attacker_moves_list)
                 raw_opponent_to_player[opp_name][own_pkm_name] = best_raw
                 best_move_opponent_to_player[opp_name][own_pkm_name] = best_move
 
