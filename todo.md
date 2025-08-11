@@ -1,53 +1,40 @@
-### Brainstorming
-- Was soll überhaput gemacht werden mit dem Programm?
-- Ich will global settings (auch mit run file und sowas, was wie gemacht werden soll)
-- Basierend auf einem Gegner-Team soll eine Gewinnende-Strategie gefunden werden
-  - Damage Calcs
-  - Gegner Team einladen, entweder trainer name und spezifischer kampf oder einfach die liste der pokemon mit allen eckdaten die vorhanden sind
-  - Eigene Pokemon einladen (muss detailiert sein, aber wenn es einmal drin ist, ist es geil sag ich)
-  - pro gegnerpokemon schauen welches eigene pokemon mit welcher attacke am schnellsten einen kill bekommt
-- einteilung der eigenen pokemon in potentielle rollen basierend auf deren moves
+UI-Things:
+- 
 
-- Gegner Team basierend auf Trainer und Battle in Datensatz speichern mit allen pokmeon, attacken, iv/ev, etc (levelcap)
-- Eigene Pokemon auch in so einen Datensatz einschreiben, alle möglichen attacken werden auch irgendwo gespeichert
-- Ich will nur sagen welches gegnerteam ich fighte als nächstes, es sagt mir dann welches team am besten passt basierend auf damage calcs
-  - Pro geg-pok welches pokemon kann am schnellsten KO (oder einfach nur OHKO) und was für ein setup dafür gebraucht wäre (gebrauchte parameter)
-- so farbe und emojis benutzen
-- Was auch reichen könnte: gucken wer gut defensiv gegen die gegner ist und basierend darauf und wer gegen die gegner sehr effektive moves hat (oder tatik kontern kann) die ranken und die besten pro pokemon auswählen (wer bei mehreren weit oben ist ist auch ein cooler pluspunkt)
-  - Stats that are good against the opponent
-  - The same goes for the attacks, which should take opponents stats into consideration
+-----------------------
 
-### Code TODOs
-- Nur einmal alle Moves und Types und so fetchen, das irgendwo speichern und dann später einfach nur check ob vorhanden
-- Es gibt eine TM/TP liste die man hat
-- Entwicklungen mit rein machen, welche möglich sind
-- Arena fight can be pulled from trainer page as well with more infos on top
-- Verbessere die ausgäbe vom Programm
-    - was soll überhaupt ausgegeben werden
-    - Was ist das Ziel vom Programm genau -> basierend auf dem Gegnerteam in einem typechart gucken welche move-typen am besten sind und in meinen Pokemon gucken wer solche moves hat (sekundär dann wer am besten defensiv auch noch aufgestellt ist)
-    - Ausgabe:
-        - Gegner-team (alle pokemon und deren typing)
-        - Welche typen gut offensiv und defensiv sind (pro pokemon auch maybe)
-        - Alle pokemon von mir die Attacken haben die matchen und diese Attacken (kompakte ausgabe)
-        - MAYBE: Jedes pokemon von mir bekommt einen defensive score (was dann aber eher auf den Attacken des Gegners basieren müsste und dafür muss ich iwwie es hinbekommen die Attacken auch noch zu Parsen und dann die infos von denen auch zu suchen (pfui, arbeit))
-            - Wenn ich das hinbekommen habe kann ich sagen welches team ich am ende aufstellen sollte
-            - Stab bonus maybe as well
-- MAYBE: vergleichen basierend auf einem type chart ob meine pokemon auch defensiv passen zu dem gegnerischen team (dafür wird moves Parsen der Gegner gebraucht), aber auch passende moves haben um das gegnerische team auszuschalten (das zweite wird aus den moves meiner pokemon gezogen und hat vorrang beim squad bauen)
-- Teste andere trainer :)
+- ui für overview screen (von eingestellten sachen und was die analyse sagt)
+- ui für das suchen von gegnerischen kämpfen
+- ui für das eingeben von eigenen pokemon (die man besitzt)
+- so einen screen für die fight-analysis mit "can hit super-effective, can't be hit super-effective" (und was diese moves sind die super-effektiv-hitten)
 
 
-### In-Game TODOs
-- finale encounter bekommen, wenn es welche gibt (nachgucken)
-  - [ ] turffield -
-  - [ ] treffprunkt -
-  - [ ] claw city -
-  - [ ] passbeck -
-  - [ ] fairballey -
-  - [ ] circhester -
-  - [ ] milza-see (auge) -
-  - [ ] wutanfall-see -
-  - [ ] route-09-tunnel -
-  - [ ] spikeford -
-  - [ ] score city - 
-- Zauberschein durch reset farmen
-- Dyna-raids machen um finale level zu farmen für teams
+BATTLE JSON GENERATOR MUSS BEI JEDEM RUN AUSGEFÜHRT WERDEN WEGEN STARTER!!!
+-> oder wenn der starter anders ist als davor oder wenn er im ui geändert wird ig
+
+-----------------------
+
+was machen die Dateien:
+- defense calc
+    - hat das gegnerische team
+    - schaut welche von gegner-Attacken die
+      eigenen pokemon wie effektiv treffen
+      kann
+    - gibt detaillierte liste pro Gegner
+      pokemon aus
+    - goal: defensiv am besten passende
+      pokemon finden gegen gegnerisches team
+- dual type effectivness gui
+    - implementation of type weaknesses calc
+    - goal: show weakness of type combi
+- global info
+    - settings for Programm pretty much
+- information manager
+    - can be called to give back every
+      needed information for rest of
+      Programm
+- main (right now)
+    - what types are the opponents pkm
+    - what are their weaknesses
+    - which moves do my pkm have that hit
+      that

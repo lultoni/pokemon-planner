@@ -1,11 +1,9 @@
 import json
-import re
 from typing import Any, Dict, List, Optional
 
 import attack_web_scraper
-import fight_to_json_generator
+from information_storage import id_to_name_generator, fight_to_json_generator
 import global_infos
-import id_to_name_generator
 from pokemon_web_scraper import get_pokemon_from_wiki
 
 def get_type_of_pokemon(name: str) -> Optional[List[str]]:

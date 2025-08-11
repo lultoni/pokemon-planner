@@ -8,6 +8,14 @@ pokemon_types = [
     "Gestein", "Geist", "Drache", "Unlicht", "Stahl", "Fee"
 ]
 
+HEALING_MOVES = {
+    "morgengrauen","mondschein","genesung","ruheort","synthese","heilbefehl","tagedieb",
+    "sandsammler","lunargebet","weichei","milchgetränk","läuterung","erholung","verzehrer",
+    "heilwoge","florakur","pollenknödel","lebentropfen","dschungelheilung","giga-lichtblick",
+    "wunschtraum","lunartanz","heilopfer","wasserring","verwurzler","egelsamen","vitalsegen",
+    "vitalglocke","heilung","aromakur","mutschub"  # "Heilblockade" ist kein Heil-Move, daher nicht enthalten
+}
+
 POKEMON_CACHE_FILE_PATH = os.path.join('information_storage', 'pokemon_knowledge_cache.json')
 ATTACK_CACHE_FILE_PATH = os.path.join('information_storage', 'attack_cache.json')
 
@@ -16,35 +24,6 @@ EFFECTIVENESS_LABELS = ["0×", "¼×", "½×", "1×", "2×", "4×"]
 
 TYPE_ICON_FOLDER = "type_icons"
 TYPE_ICON_FILENAME_PATTERN = "Typ-Icon_{typ}_KAPU.png"
-
-# --- FROM MAIN ---
-
-fields_per_move = ['Level', 'Name', 'Typ', 'Kategorie', 'Stärke', 'Genauigkeit', 'AP']
-global_level_cap = 70
-grouping_key = "Art"
-minimum_strength_move = 70
-ALLOW_TP_MOVES = False
-
-# filter funktion, wird nach der gegnerischen team analyse unten gemacht
-def filter_funktion_error(atk):
-    # Beispiel: Suche nach Stahl-Attacken, die keine Status-Attacken sind
-    return ((atk['Typ'] == 'Stahl'
-             and atk['Kategorie'] != 'Status'
-             and is_strong_enough(atk['Stärke'], minimum_strength_move))
-            and is_allowed_level(atk['Level']))
-
-def is_allowed_level(level):
-    if ALLOW_TP_MOVES:
-        return True
-    if isinstance(level, str) and level.upper().startswith("TP"):
-        return False
-    return True
-
-def is_strong_enough(stärke, minimum):
-    try:
-        return int(stärke) >= minimum
-    except (ValueError, TypeError):
-        return True
 
 # --- INDIVIDUAL LEVEL DATA (change to fit your playthrough) ---
 
@@ -59,6 +38,14 @@ starter_pokemon_list = [
 # - 3 (Feuer)
 # - 6 (Wasser)
 starter_pokemon = starter_pokemon_list[6]
+
+default_strength_move = 10
+
+# Weights für Berechnungen in der Analyse
+w_dmg = 2.0
+w_surv = 3.0
+w_util = 0.5
+w_expo = 1.0
 
 owned_pokemon_list = [
     "Vulnona", "Rexblisar", "Flunschlik", "Golgantes", "Strepoli", "Piondragi",

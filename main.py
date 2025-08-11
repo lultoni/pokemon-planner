@@ -4,19 +4,8 @@ import type_effectiveness
 from tqdm import tqdm # Importiere die tqdm-Bibliothek
 import math
 
-# Hilfssets / heuristics für utility detection (Deutsch/Englisch gemischt, erweiterbar)
-RECOVERY_KEYWORDS = ["Erholung", "Genesung", "Erholung", "Recover", "Rest", "Ruheort", "Heil", "Regener"]
 # Status moves zählen wir, wenn die Move-Kategorie "Status" ist (so vorhanden)
 MAX_TOP_PER_OPP = 3
-
-# Liste mit heilenden Moves (kleingeschrieben für einfache Vergleiche)
-HEALING_MOVES = {
-    "morgengrauen","mondschein","genesung","ruheort","synthese","heilbefehl","tagedieb",
-    "sandsammler","lunargebet","weichei","milchgetränk","läuterung","erholung","verzehrer",
-    "heilwoge","florakur","pollenknödel","lebentropfen","dschungelheilung","giga-lichtblick",
-    "wunschtraum","lunartanz","heilopfer","wasserring","verwurzler","egelsamen","vitalsegen",
-    "vitalglocke","heilung","aromakur","mutschub"  # "Heilblockade" ist kein Heil-Move, daher nicht enthalten
-}
 
 # Hinweis: falls es unterschiedliche Schreibweisen in deinem Cache gibt (z. B. 'Giga-Lichtblick' vs 'Giga Lichtblick'),
 # kannst du noch zusätzliche Varianten hinzufügen oder beim Vergleich non-alphanumerische Zeichen entfernen.
@@ -28,12 +17,16 @@ def _parse_power(own_move_name, own_move):
     sonst weiche auf bekannte Sonderfälle oder Standardwert aus.
     """
     if own_move is None:
-        return 10
-    Stärke = own_move.get("Stärke")
-    if Stärke == "K.O.":
+        return global_infos.default_strength_move
+
+    if own_move.get("Kategorie") == "Status":
+        return 0 # todo how do you wanna handle status moves
+
+    strength = own_move.get("Stärke")
+    if strength == "K.O.":
         return 255
-    if Stärke and isinstance(Stärke, str) and Stärke.isdigit():
-        return int(Stärke)
+    if strength and isinstance(strength, str) and strength.isdigit():
+        return int(strength)
     # Sonderfälle (deine bisherigen Zuordnungen)
     if own_move_name == "Schleuder":
         return 30
@@ -41,8 +34,9 @@ def _parse_power(own_move_name, own_move):
         return 60
     if own_move_name == "Dreschflegel":
         return 40
-    # Default für unbekannte/Status-Moves
-    return 10
+
+    # Default für unbekannte
+    return global_infos.default_strength_move
 
 def _infer_category_from_base(atk_stats):
     """
@@ -83,11 +77,12 @@ def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacke
     """
     Berechnet für einen Angreifer (attacker_pkm) gegen einen Defender (defender_pkm)
     den besten raw-Wert über alle Moves des Angreifers (ohne Accuracy/STAB).
-    attacker_moves_list muss die gleiche Struktur haben wie in deinem Code:
-      eine Liste von attack-listen (wie get_attacks_of_pokemon_as_list liefert).
+    Gibt am Ende den Rechenweg für den besten gefundenen Move aus.
     """
     best_raw = 0.0
-    # Wenn keine Moves bekannt -> fallback: keine Moves => raw 0 (oder kleiner Default)
+    # NEU: Ein Dictionary, um die Details der besten Berechnung zu speichern
+    best_calculation_details = {}
+
     if not attacker_moves_list:
         return best_raw
 
@@ -98,19 +93,17 @@ def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacke
             move_name = move_meta.get("Name", "")
             move_in_cache = information_manager.get_attack_in_cache(move_name)
 
-            # Power bestimmen (falls move_in_cache vorhanden, nutze _parse_power, sonst Default)
             if move_in_cache:
                 power = _parse_power(move_name, move_in_cache)
                 move_type = move_in_cache.get("Typ")
             else:
-                power = 10
+                print(f"Move not in Cache whilst computing raw damage - Name: {move_name}")
+                power = global_infos.default_strength_move
                 move_type = None
 
-            # WICHTIG: Kategorie pro MOVE bestimmen (nicht per Pokémon-Stat)
             category = determine_move_category(move_meta, move_in_cache, attacker_pkm)
 
-            # Stats wählen basierend auf der tatsächlich bestimmten Kategorie
-            if category.lower().startswith("s"):  # 'Speziell' oder ähnlich
+            if category.lower().startswith("s"):
                 attack_stat = attacker_pkm["Statuswerte"].get("SpAngriff", 0.0)
                 defense_stat = defender_pkm["Statuswerte"].get("SpVerteidigung", 1.0)
             else:
@@ -118,7 +111,6 @@ def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacke
                 defense_stat = defender_pkm["Statuswerte"].get("Verteidigung", 1.0)
             defense_stat = max(defense_stat, 1.0)
 
-            # Type effectiveness (falls move_type unbekannt -> eff = 1.0)
             if move_type:
                 try:
                     eff = type_effectiveness.get_effectiveness(move_type, defender_pkm["Typen"])
@@ -128,9 +120,34 @@ def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacke
                 eff = 1.0
 
             raw = power * (attack_stat / defense_stat) * eff
+
+            # GEÄNDERT: Wenn ein besserer Raw-Wert gefunden wird, speichern wir alle Details
             if raw > best_raw:
                 best_raw = raw
-    return best_raw
+                best_calculation_details = {
+                    "move_name": move_name,
+                    "power": power,
+                    "attack_stat": attack_stat,
+                    "defense_stat": defense_stat,
+                    "effectiveness": eff
+                }
+
+    # NEU: Nach der Schleife, gib den besten Rechenweg aus, falls einer gefunden wurde
+    if best_calculation_details:
+        defender_name = information_manager.get_name_from_id(defender_pkm.get("ID"))
+        details = best_calculation_details # Nur zur besseren Lesbarkeit
+
+        print("\n--- Bester Raw-Damage ---")
+        print(f"Angreifer: {attacker_name}")
+        print(f"Verteidiger: {defender_name}")
+        print(f"Attacke: {details['move_name']}")
+        print(f"Formel: power * (attack / defense) * effectiveness")
+        print(f"Werte: {details['power']} * ({details['attack_stat']} / {details['defense_stat']}) * {details['effectiveness']}")
+        print(f"Ergebnis: {best_raw:.2f}")
+        print("-------------------------\n")
+    else:
+        print("no data..?")
+    return best_raw, best_calculation_details['move_name']
 
 def compute_utility_score_for_attacker(attacker_name, attacker_moves_list):
     """
@@ -151,7 +168,7 @@ def compute_utility_score_for_attacker(attacker_name, attacker_moves_list):
             move_name_norm = move_name.lower()
 
             # Recovery-Erkennung ausschliesslich über Move-Name
-            if move_name_norm in HEALING_MOVES:
+            if move_name_norm in global_infos.HEALING_MOVES:
                 has_recovery = True
 
             # Status detection: prefer move_cache Kategorie, fallback auf move_meta
@@ -169,62 +186,52 @@ def compute_utility_score_for_attacker(attacker_name, attacker_moves_list):
     score += min(0.5, status_count * 0.12)  # cap bei 0.5
     return min(1.0, score)
 
-def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacker_moves_list):
+def get_farbigen_wert_string(wert: float) -> str:
     """
-    Berechnet für einen Angreifer gegen einen Defender den besten raw-Wert und
-    liefert zusätzlich den Namen des Moves zurück, der diesen raw-Wert erzeugt.
-    Rückgabe: (best_raw: float, best_move_name: str|None)
+    Nimmt einen Float-Wert zwischen 0.0 und 1.0 und gibt ihn als
+    farbigen String für die Konsole zurück.
+    Der Farbverlauf geht von Rot (0.0) über Grau (0.5) zu Grün (1.0).
+
+    Args:
+        wert: Eine Fließkommazahl zwischen 0.0 und 1.0.
+
+    Returns:
+        Einen String, der den Wert mit ANSI-Farbcodes enthält.
+        Gibt den Wert ohne Farbe zurück, wenn er außerhalb des Bereichs liegt.
     """
-    best_raw = 0.0
-    best_move_name = None
+    # --- Input-Validierung ---
+    # Stellt sicher, dass der Wert im gültigen Bereich liegt.
+    if not (0.0 <= wert <= 1.0):
+        return str(wert)
 
-    # Wenn keine Moves bekannt -> fallback: keine Moves => raw 0
-    if not attacker_moves_list:
-        return best_raw, best_move_name
+    # --- Farb-Berechnung (Lineare Interpolation) ---
+    # Wir definieren einen zweistufigen Gradienten:
+    # 1. Von Rot (255, 0, 0) zu Grau (128, 128, 128) für Werte von 0.0 bis 0.5
+    # 2. Von Grau (128, 128, 128) zu Grün (0, 255, 0) für Werte von 0.5 bis 1.0
 
-    for attack_list in attacker_moves_list:
-        for move_meta in attack_list:
-            if not move_meta:
-                continue
-            move_name = (move_meta.get("Name") or "").strip()
-            move_in_cache = information_manager.get_attack_in_cache(move_name)
+    if wert <= 0.5:
+        # Skaliere den Wert auf den Bereich 0 bis 1 für die erste Hälfte
+        t = wert * 2
+        # Interpoliere von Rot (255, 0, 0) zu Grau (128, 128, 128)
+        r = int(255 + (128 - 255) * t)
+        g = int(0 + (128 - 0) * t)
+        b = int(0 + (128 - 0) * t)
+    else: # wert > 0.5
+        # Skaliere den Wert auf den Bereich 0 bis 1 für die zweite Hälfte
+        t = (wert - 0.5) * 2
+        # Interpoliere von Grau (128, 128, 128) zu Grün (0, 255, 0)
+        r = int(128 + (0 - 128) * t)
+        g = int(128 + (255 - 128) * t)
+        b = int(128 + (0 - 128) * t)
 
-            # Power bestimmen (falls move_in_cache vorhanden, nutze _parse_power, sonst Default)
-            if move_in_cache:
-                power = _parse_power(move_name, move_in_cache)
-                move_type = move_in_cache.get("Typ")
-            else:
-                power = 10
-                move_type = None
+    # --- String-Formatierung mit ANSI-Farbcodes ---
+    # \033[38;2;r;g;bm -> Setzt die Vordergrundfarbe (Text) auf den RGB-Wert
+    # \033[0m          -> Setzt alle Formatierungen zurück (wichtig!)
 
-            # Kategorie pro MOVE bestimmen
-            category = determine_move_category(move_meta, move_in_cache, attacker_pkm)
+    # Formatieren des Wertes auf z.B. 2 Nachkommastellen für eine saubere Ausgabe
+    wert_str = f"{wert:.2f}"
 
-            # Stats wählen basierend auf der bestimmten Kategorie
-            if category and str(category).lower().startswith("s"):  # 'Speziell'...
-                attack_stat = attacker_pkm["Statuswerte"].get("SpAngriff", 0.0)
-                defense_stat = defender_pkm["Statuswerte"].get("SpVerteidigung", 1.0)
-            else:
-                attack_stat = attacker_pkm["Statuswerte"].get("Angriff", 0.0)
-                defense_stat = defender_pkm["Statuswerte"].get("Verteidigung", 1.0)
-            defense_stat = max(defense_stat, 1.0)
-
-            # Type effectiveness (falls move_type unbekannt -> eff = 1.0)
-            if move_type:
-                try:
-                    eff = type_effectiveness.get_effectiveness(move_type, defender_pkm["Typen"])
-                except Exception:
-                    eff = 1.0
-            else:
-                eff = 1.0
-
-            raw = power * (attack_stat / defense_stat) * eff
-
-            if raw > best_raw:
-                best_raw = raw
-                best_move_name = move_name if move_name else None
-
-    return best_raw, best_move_name
+    return f"\033[38;2;{r};{g};{b}m{wert_str}\033[0m"
 
 def main():
     print("Analyse Start")
@@ -232,6 +239,8 @@ def main():
     opponent_data = information_manager.get_trainer_team_from_trainer_name(global_infos.opponent_trainer_name)[0]
     opponent_team = opponent_data["team"]
     print(" ~ Fetched Opponent Data")
+    for opp_pkm_data in opponent_team:
+        print(f"   | {information_manager.get_name_from_id(opp_pkm_data['id'])} with {opp_pkm_data['moves']}")
 
     owned_list = global_infos.owned_pokemon_list
     print(" ~ Fetched Own Pokemon")
@@ -308,6 +317,7 @@ def main():
 
     vmin = min(all_raw_values)
     vmax = max(all_raw_values)
+    print(" ~ Got min & max from raw values")
 
     damage_player_to_opponent = {}
     damage_opponent_to_player = {}
@@ -324,6 +334,8 @@ def main():
             damage_player_to_opponent[atk] = {defn: (val - vmin) / span for defn, val in d.items()}
         for atk, d in raw_opponent_to_player.items():
             damage_opponent_to_player[atk] = {defn: (val - vmin) / span for defn, val in d.items()}
+
+    print(" ~ Normalized Raw Values")
 
     # Ausgabe: (optional) print normalized damage scores in ähnlichem Format wie vorher
     # print("=== Normalized damage player -> opponent (0..1) ===")
@@ -358,11 +370,7 @@ def main():
                 incoming.append(val)
         exposure_scores[own_name] = (sum(incoming)/len(incoming)) if incoming else 0.0
 
-    # Weights (tweakable)
-    w_dmg = 3.0
-    w_surv = 2.0
-    w_util = 1.0
-    w_expo = 1.5
+    print(" ~ Calculated Utility and Exposure Scores")
 
     # Build raw counter scores (attacker -> defender)
     counter_raw = {}  # counter_raw[own][opp] = raw_score
@@ -379,10 +387,12 @@ def main():
             util = utility_scores.get(own_name, 0.0)
             exposure = exposure_scores.get(own_name, 0.0)
 
-            raw_score = (w_dmg * dmg_score) + (w_surv * survival_estimate) + (w_util * util) - (w_expo * exposure)
+            raw_score = (global_infos.w_dmg * dmg_score) + (global_infos.w_surv * survival_estimate) + (global_infos.w_util * util) - (global_infos.w_expo * exposure)
             # keep raw
             counter_raw[own_name][opp_name] = raw_score
             all_counter_raw_values.append(raw_score)
+
+    print(" ~ Calculated Counter Scores; Added Weights into Full Score")
 
     # Normalize counter_raw to 0..100 for readability
     counter_score = {}
@@ -405,6 +415,8 @@ def main():
         for own_name in owned_list:
             counter_score[own_name] = {information_manager.get_name_from_id(o["id"]): 50.0 for o in opponent_team}
 
+    print(" ~ Normalized Counter Scores")
+
         # Candidate selection per opponent: rank own pokemon by counter_score(P,G)
     print("\n=== Top Counters pro Gegner (Top {}) ===".format(MAX_TOP_PER_OPP))
     for opp_b in opponent_team:
@@ -416,16 +428,17 @@ def main():
             # compute contribution breakdown for explanation
             dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0) # todo change to hits till ko
             incoming = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0) # todo change to hits till ko
-            survival = 1.0 - incoming # todo change to calc with base hp of pokemon
+            survival = 1.0 - min((((vmax - vmin) * incoming + vmin) / information_manager.get_pokemon_in_cache(own_name).get("Statuswerte")["KP"]), 1.0)
+            print(f"(opp) {opp_name} gegen {own_name} (own) - survival={get_farbigen_wert_string(survival)}")
             util = utility_scores.get(own_name, 0.0)
             exposure = exposure_scores.get(own_name, 0.0)
 
             # contributions (weighted)
             contribs = {
-                "Schaden": w_dmg * dmg_score,
-                "Überlebens-Einschätzung": w_surv * survival,
-                "Utility": w_util * util,
-                "Exposure-Penalty": -w_expo * exposure
+                "Schaden": global_infos.w_dmg * dmg_score,
+                "Überlebens-Einschätzung": global_infos.w_surv * survival,
+                "Utility": global_infos.w_util * util,
+                "Exposure-Penalty": -global_infos.w_expo * exposure
             }
 
             # best moves (Names) — falls nicht vorhanden -> 'Unknown'
@@ -444,18 +457,18 @@ def main():
             top_reasons = []
             for k, v in pos_contribs[:2]:
                 if k == "Schaden":
-                    top_reasons.append(f"Hoher erwarteter Schaden (damage_score={dmg_score:.3f})")
+                    top_reasons.append(f"Hoher erwarteter Schaden (damage_score={get_farbigen_wert_string(dmg_score)})")
                 elif k == "Überlebens-Einschätzung":
-                    top_reasons.append(f"Gute Überlebenschance beim Switch (survival={survival:.3f})")
+                    top_reasons.append(f"Gute Überlebenschance beim Switch (survival={get_farbigen_wert_string(survival)})")
                 elif k == "Utility":
-                    top_reasons.append(f"Nützliche Status/Recovery-Moves (utility={util:.2f})")
+                    top_reasons.append(f"Nützliche Status/Recovery-Moves (utility={get_farbigen_wert_string(util)})")
             if exposure >= 0.4:
-                top_reasons.append(f"Vorsicht: hohe Verwundbarkeit gegen restliches Team (exposure={exposure:.2f})")
+                top_reasons.append(f"Vorsicht: hohe Verwundbarkeit gegen restliches Team (exposure={get_farbigen_wert_string(exposure)})")
 
             print(f" {i}. {own_name} — Score: {score}")
             # Show best moves
-            print(f"    - Top Move (eigener): {own_best_move} — geschätzter Schaden : {((vmax - vmin) * dmg_score + vmin):.3f}")
-            print(f"    - Top Move (Gegner gegen {own_name}): {opp_best_move} — geschätzter incoming : {((vmax - vmin) * incoming + vmin):.3f}")
+            print(f"    - Top Move (eigener): {own_best_move} — gesch. Schaden : {((vmax - vmin) * dmg_score + vmin):.3f}")
+            print(f"    - Top Move (Gegner): {opp_best_move} — gesch. incoming : {((vmax - vmin) * incoming + vmin):.3f}")
             for r in top_reasons:
                 print(f"    - {r}")
 
