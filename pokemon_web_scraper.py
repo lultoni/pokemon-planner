@@ -519,7 +519,17 @@ def get_pokemon_from_wiki(pokemon_name: str):
     Holt Pokémon-Daten aus dem Wiki.
     Speichert sie nur, falls nicht bereits im Cache vorhanden.
     """
-    entry = build_pokemon_entry(pokemon_name)
-    if entry:
-        return save_to_cache_if_missing(pokemon_name, entry)
-    return None
+    filename = global_infos.POKEMON_CACHE_FILE_PATH
+
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            cache = json.load(f)
+    else:
+        cache = {}
+
+    if pokemon_name not in cache:
+        entry = build_pokemon_entry(pokemon_name)
+        if entry:
+            return save_to_cache_if_missing(pokemon_name, entry)
+        return None
+    return cache[pokemon_name]

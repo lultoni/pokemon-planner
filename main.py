@@ -169,6 +169,63 @@ def compute_utility_score_for_attacker(attacker_name, attacker_moves_list):
     score += min(0.5, status_count * 0.12)  # cap bei 0.5
     return min(1.0, score)
 
+def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacker_moves_list):
+    """
+    Berechnet für einen Angreifer gegen einen Defender den besten raw-Wert und
+    liefert zusätzlich den Namen des Moves zurück, der diesen raw-Wert erzeugt.
+    Rückgabe: (best_raw: float, best_move_name: str|None)
+    """
+    best_raw = 0.0
+    best_move_name = None
+
+    # Wenn keine Moves bekannt -> fallback: keine Moves => raw 0
+    if not attacker_moves_list:
+        return best_raw, best_move_name
+
+    for attack_list in attacker_moves_list:
+        for move_meta in attack_list:
+            if not move_meta:
+                continue
+            move_name = (move_meta.get("Name") or "").strip()
+            move_in_cache = information_manager.get_attack_in_cache(move_name)
+
+            # Power bestimmen (falls move_in_cache vorhanden, nutze _parse_power, sonst Default)
+            if move_in_cache:
+                power = _parse_power(move_name, move_in_cache)
+                move_type = move_in_cache.get("Typ")
+            else:
+                power = 10
+                move_type = None
+
+            # Kategorie pro MOVE bestimmen
+            category = determine_move_category(move_meta, move_in_cache, attacker_pkm)
+
+            # Stats wählen basierend auf der bestimmten Kategorie
+            if category and str(category).lower().startswith("s"):  # 'Speziell'...
+                attack_stat = attacker_pkm["Statuswerte"].get("SpAngriff", 0.0)
+                defense_stat = defender_pkm["Statuswerte"].get("SpVerteidigung", 1.0)
+            else:
+                attack_stat = attacker_pkm["Statuswerte"].get("Angriff", 0.0)
+                defense_stat = defender_pkm["Statuswerte"].get("Verteidigung", 1.0)
+            defense_stat = max(defense_stat, 1.0)
+
+            # Type effectiveness (falls move_type unbekannt -> eff = 1.0)
+            if move_type:
+                try:
+                    eff = type_effectiveness.get_effectiveness(move_type, defender_pkm["Typen"])
+                except Exception:
+                    eff = 1.0
+            else:
+                eff = 1.0
+
+            raw = power * (attack_stat / defense_stat) * eff
+
+            if raw > best_raw:
+                best_raw = raw
+                best_move_name = move_name if move_name else None
+
+    return best_raw, best_move_name
+
 def main():
     print("Analyse Start")
 
@@ -185,6 +242,9 @@ def main():
     # Dictionaries: nested mapping attacker_name -> defender_name -> raw_value
     raw_player_to_opponent = {}
     raw_opponent_to_player = {}
+    # Neue Maps: attacker_name -> defender_name -> best_move_name
+    best_move_player_to_opponent = {}
+    best_move_opponent_to_player = {}
     print(" ~ Initialized Mapping Dictionaries")
 
     # Preload move-lists for all Pokémon (schneller repeated access)
@@ -207,12 +267,14 @@ def main():
             own_pkm = information_manager.get_pokemon_in_cache(own_pkm_name)
             attacker_moves_list = moves_cache.get(own_pkm_name, [])
             raw_player_to_opponent.setdefault(own_pkm_name, {})
+            best_move_player_to_opponent.setdefault(own_pkm_name, {})
             for opp_fight_data_pkm in opponent_team:
                 opp_name = information_manager.get_name_from_id(opp_fight_data_pkm["id"])
                 opp_pkm = information_manager.get_pokemon_in_cache(opp_name)
 
-                best_raw = compute_best_raw_for_pair(own_pkm, own_pkm_name, opp_pkm, attacker_moves_list)
+                best_raw, best_move = compute_best_raw_for_pair(own_pkm, own_pkm_name, opp_pkm, attacker_moves_list)
                 raw_player_to_opponent[own_pkm_name][opp_name] = best_raw
+                best_move_player_to_opponent[own_pkm_name][opp_name] = best_move
 
                 pbar.update(1)
 
@@ -222,11 +284,13 @@ def main():
             opp_pkm = information_manager.get_pokemon_in_cache(opp_name)
             attacker_moves_list = opp_moves_cache.get(opp_name, [])
             raw_opponent_to_player.setdefault(opp_name, {})
+            best_move_opponent_to_player.setdefault(opp_name, {})
             for own_pkm_name in owned_list:
                 own_pkm = information_manager.get_pokemon_in_cache(own_pkm_name)
 
-                best_raw = compute_best_raw_for_pair(opp_pkm, opp_name, own_pkm, attacker_moves_list)
+                best_raw, best_move = compute_best_raw_for_pair(opp_pkm, opp_name, own_pkm, attacker_moves_list)
                 raw_opponent_to_player[opp_name][own_pkm_name] = best_raw
+                best_move_opponent_to_player[opp_name][own_pkm_name] = best_move
 
                 pbar.update(1)
 
@@ -262,15 +326,15 @@ def main():
             damage_opponent_to_player[atk] = {defn: (val - vmin) / span for defn, val in d.items()}
 
     # Ausgabe: (optional) print normalized damage scores in ähnlichem Format wie vorher
-    print("=== Normalized damage player -> opponent (0..1) ===")
-    for own_name, mapping in damage_player_to_opponent.items():
-        for opp_name, score in mapping.items():
-            print([own_name, opp_name, round(score, 4)])
-
-    print("=== Normalized damage opponent -> player (0..1) ===")
-    for opp_name, mapping in damage_opponent_to_player.items():
-        for own_name, score in mapping.items():
-            print([opp_name, own_name, round(score, 4)])
+    # print("=== Normalized damage player -> opponent (0..1) ===")
+    # for own_name, mapping in damage_player_to_opponent.items():
+    #     for opp_name, score in mapping.items():
+    #         print([own_name, opp_name, round(score, 4)])
+    #
+    # print("=== Normalized damage opponent -> player (0..1) ===")
+    # for opp_name, mapping in damage_opponent_to_player.items():
+    #     for own_name, score in mapping.items():
+    #         print([opp_name, own_name, round(score, 4)])
 
     # ---------------------------
     # -> Compute CounterScore & Candidate Selection
@@ -341,7 +405,7 @@ def main():
         for own_name in owned_list:
             counter_score[own_name] = {information_manager.get_name_from_id(o["id"]): 50.0 for o in opponent_team}
 
-    # Candidate selection per opponent: rank own pokemon by counter_score(P,G)
+        # Candidate selection per opponent: rank own pokemon by counter_score(P,G)
     print("\n=== Top Counters pro Gegner (Top {}) ===".format(MAX_TOP_PER_OPP))
     for opp_b in opponent_team:
         opp_name = information_manager.get_name_from_id(opp_b["id"])
@@ -350,9 +414,9 @@ def main():
         for own_name in owned_list:
             score = counter_score.get(own_name, {}).get(opp_name, 0.0)
             # compute contribution breakdown for explanation
-            dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0)
-            incoming = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0)
-            survival = 1.0 - incoming
+            dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0) # todo change to hits till ko
+            incoming = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0) # todo change to hits till ko
+            survival = 1.0 - incoming # todo change to calc with base hp of pokemon
             util = utility_scores.get(own_name, 0.0)
             exposure = exposure_scores.get(own_name, 0.0)
 
@@ -363,33 +427,37 @@ def main():
                 "Utility": w_util * util,
                 "Exposure-Penalty": -w_expo * exposure
             }
-            ranked.append((own_name, score, contribs, dmg_score, survival, util, exposure))
+
+            # best moves (Names) — falls nicht vorhanden -> 'Unknown'
+            own_best_move = best_move_player_to_opponent.get(own_name, {}).get(opp_name) or "Unknown"
+            opp_best_move = best_move_opponent_to_player.get(opp_name, {}).get(own_name) or "Unknown"
+
+            ranked.append((own_name, score, contribs, dmg_score, survival, util, exposure, own_best_move, opp_best_move))
         # sort desc by score
         ranked.sort(key=lambda x: x[1], reverse=True)
 
         print("\nGegner: {}".format(opp_name))
-        for i, (own_name, score, contribs, dmg_score, survival, util, exposure) in enumerate(ranked[:MAX_TOP_PER_OPP], start=1):
+        for i, (own_name, score, contribs, dmg_score, survival, util, exposure, own_best_move, opp_best_move) in enumerate(ranked[:MAX_TOP_PER_OPP], start=1):
             # build top reason lines: pick top 2 positive contributors
             pos_contribs = [(k, v) for k, v in contribs.items() if v > 0]
             pos_contribs.sort(key=lambda x: x[1], reverse=True)
             top_reasons = []
             for k, v in pos_contribs[:2]:
-                # make human friendly
                 if k == "Schaden":
                     top_reasons.append(f"Hoher erwarteter Schaden (damage_score={dmg_score:.3f})")
                 elif k == "Überlebens-Einschätzung":
                     top_reasons.append(f"Gute Überlebenschance beim Switch (survival={survival:.3f})")
                 elif k == "Utility":
                     top_reasons.append(f"Nützliche Status/Recovery-Moves (utility={util:.2f})")
-            # also add primary risk if exposure large
             if exposure >= 0.4:
                 top_reasons.append(f"Vorsicht: hohe Verwundbarkeit gegen restliches Team (exposure={exposure:.2f})")
 
             print(f" {i}. {own_name} — Score: {score}")
+            # Show best moves
+            print(f"    - Top Move (eigener): {own_best_move} — geschätzter Schaden : {((vmax - vmin) * dmg_score + vmin):.3f}")
+            print(f"    - Top Move (Gegner gegen {own_name}): {opp_best_move} — geschätzter incoming : {((vmax - vmin) * incoming + vmin):.3f}")
             for r in top_reasons:
                 print(f"    - {r}")
-
-    # Ende Counter/Selection Block
 
     print("Analyse Ende")
 
