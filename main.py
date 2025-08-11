@@ -4,6 +4,24 @@ import type_effectiveness
 from tqdm import tqdm # Importiere die tqdm-Bibliothek
 import math
 
+# Hilfssets / heuristics für utility detection (Deutsch/Englisch gemischt, erweiterbar)
+RECOVERY_KEYWORDS = ["Erholung", "Genesung", "Erholung", "Recover", "Rest", "Ruheort", "Heil", "Regener"]
+# Status moves zählen wir, wenn die Move-Kategorie "Status" ist (so vorhanden)
+MAX_TOP_PER_OPP = 3
+
+# Liste mit heilenden Moves (kleingeschrieben für einfache Vergleiche)
+HEALING_MOVES = {
+    "morgengrauen","mondschein","genesung","ruheort","synthese","heilbefehl","tagedieb",
+    "sandsammler","lunargebet","weichei","milchgetränk","läuterung","erholung","verzehrer",
+    "heilwoge","florakur","pollenknödel","lebentropfen","dschungelheilung","giga-lichtblick",
+    "wunschtraum","lunartanz","heilopfer","wasserring","verwurzler","egelsamen","vitalsegen",
+    "vitalglocke","heilung","aromakur","mutschub"  # "Heilblockade" ist kein Heil-Move, daher nicht enthalten
+}
+
+# Hinweis: falls es unterschiedliche Schreibweisen in deinem Cache gibt (z. B. 'Giga-Lichtblick' vs 'Giga Lichtblick'),
+# kannst du noch zusätzliche Varianten hinzufügen oder beim Vergleich non-alphanumerische Zeichen entfernen.
+
+
 def _parse_power(own_move_name, own_move):
     """
     Extrahiere eine numerische Power aus own_move (falls vorhanden),
@@ -114,6 +132,43 @@ def compute_best_raw_for_pair(attacker_pkm, attacker_name, defender_pkm, attacke
                 best_raw = raw
     return best_raw
 
+def compute_utility_score_for_attacker(attacker_name, attacker_moves_list):
+    """
+    Einfache Heuristik (0..1):
+    - hat Recovery (Move-Name ist in HEALING_MOVES) -> +0.25
+    - Anzahl Status-Moves (Kategorie == 'Status') -> +0.12 pro Move (max. +0.5)
+    Wichtig: Es wird **nur** auf Move-Namen geprüft (keine Effekt-/Beschreibungssuche).
+    """
+    score = 0.0
+    status_count = 0
+    has_recovery = False
+
+    for attack_list in attacker_moves_list:
+        for move_meta in attack_list:
+            if not move_meta:
+                continue
+            move_name = (move_meta.get("Name") or "").strip()
+            move_name_norm = move_name.lower()
+
+            # Recovery-Erkennung ausschliesslich über Move-Name
+            if move_name_norm in HEALING_MOVES:
+                has_recovery = True
+
+            # Status detection: prefer move_cache Kategorie, fallback auf move_meta
+            move_cache = information_manager.get_attack_in_cache(move_name) if move_name else None
+            cat = None
+            if move_cache and isinstance(move_cache, dict):
+                cat = move_cache.get("Kategorie")
+            if not cat:
+                cat = move_meta.get("Kategorie")
+            if cat and str(cat).lower().startswith("s"):  # 'Status'...
+                status_count += 1
+
+    if has_recovery:
+        score += 0.25
+    score += min(0.5, status_count * 0.12)  # cap bei 0.5
+    return min(1.0, score)
+
 def main():
     print("Analyse Start")
 
@@ -216,6 +271,125 @@ def main():
     for opp_name, mapping in damage_opponent_to_player.items():
         for own_name, score in mapping.items():
             print([opp_name, own_name, round(score, 4)])
+
+    # ---------------------------
+    # -> Compute CounterScore & Candidate Selection
+    # ---------------------------
+
+    # Precompute utility_scores and exposure (avg incoming damage)
+    utility_scores = {}
+    exposure_scores = {}  # exposure per own_pkm = avg damage_opponent_to_player over all opponents
+
+    # Ensure move lists caches exist (moves_cache already built earlier)
+    for own_name in owned_list:
+        attacker_moves_list = moves_cache.get(own_name, [])
+        utility_scores[own_name] = compute_utility_score_for_attacker(own_name, attacker_moves_list)
+
+        # exposure: average of damage_opponent_to_player[*][own_name]
+        incoming = []
+        for opp_b in opponent_team:
+            opp_name = information_manager.get_name_from_id(opp_b["id"])
+            val = damage_opponent_to_player.get(opp_name, {}).get(own_name)
+            if val is not None:
+                incoming.append(val)
+        exposure_scores[own_name] = (sum(incoming)/len(incoming)) if incoming else 0.0
+
+    # Weights (tweakable)
+    w_dmg = 3.0
+    w_surv = 2.0
+    w_util = 1.0
+    w_expo = 1.5
+
+    # Build raw counter scores (attacker -> defender)
+    counter_raw = {}  # counter_raw[own][opp] = raw_score
+    all_counter_raw_values = []
+
+    for own_name in owned_list:
+        counter_raw.setdefault(own_name, {})
+        for opp_b in opponent_team:
+            opp_name = information_manager.get_name_from_id(opp_b["id"])
+
+            dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0)  # 0..1
+            incoming_vs_own_from_opp = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0)  # 0..1
+            survival_estimate = 1.0 - incoming_vs_own_from_opp  # higher = better survive switch
+            util = utility_scores.get(own_name, 0.0)
+            exposure = exposure_scores.get(own_name, 0.0)
+
+            raw_score = (w_dmg * dmg_score) + (w_surv * survival_estimate) + (w_util * util) - (w_expo * exposure)
+            # keep raw
+            counter_raw[own_name][opp_name] = raw_score
+            all_counter_raw_values.append(raw_score)
+
+    # Normalize counter_raw to 0..100 for readability
+    counter_score = {}
+    if all_counter_raw_values:
+        cr_min = min(all_counter_raw_values)
+        cr_max = max(all_counter_raw_values)
+        if math.isclose(cr_min, cr_max):
+            # edge: all equal -> 50
+            for own_name, mapping in counter_raw.items():
+                counter_score[own_name] = {opp: 50.0 for opp in mapping}
+        else:
+            span = cr_max - cr_min
+            for own_name, mapping in counter_raw.items():
+                counter_score.setdefault(own_name, {})
+                for opp_name, raw_val in mapping.items():
+                    norm01 = (raw_val - cr_min) / span
+                    counter_score[own_name][opp_name] = round(norm01 * 100.0, 2)
+    else:
+        # nothing computed
+        for own_name in owned_list:
+            counter_score[own_name] = {information_manager.get_name_from_id(o["id"]): 50.0 for o in opponent_team}
+
+    # Candidate selection per opponent: rank own pokemon by counter_score(P,G)
+    print("\n=== Top Counters pro Gegner (Top {}) ===".format(MAX_TOP_PER_OPP))
+    for opp_b in opponent_team:
+        opp_name = information_manager.get_name_from_id(opp_b["id"])
+        # build list
+        ranked = []
+        for own_name in owned_list:
+            score = counter_score.get(own_name, {}).get(opp_name, 0.0)
+            # compute contribution breakdown for explanation
+            dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0)
+            incoming = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0)
+            survival = 1.0 - incoming
+            util = utility_scores.get(own_name, 0.0)
+            exposure = exposure_scores.get(own_name, 0.0)
+
+            # contributions (weighted)
+            contribs = {
+                "Schaden": w_dmg * dmg_score,
+                "Überlebens-Einschätzung": w_surv * survival,
+                "Utility": w_util * util,
+                "Exposure-Penalty": -w_expo * exposure
+            }
+            ranked.append((own_name, score, contribs, dmg_score, survival, util, exposure))
+        # sort desc by score
+        ranked.sort(key=lambda x: x[1], reverse=True)
+
+        print("\nGegner: {}".format(opp_name))
+        for i, (own_name, score, contribs, dmg_score, survival, util, exposure) in enumerate(ranked[:MAX_TOP_PER_OPP], start=1):
+            # build top reason lines: pick top 2 positive contributors
+            pos_contribs = [(k, v) for k, v in contribs.items() if v > 0]
+            pos_contribs.sort(key=lambda x: x[1], reverse=True)
+            top_reasons = []
+            for k, v in pos_contribs[:2]:
+                # make human friendly
+                if k == "Schaden":
+                    top_reasons.append(f"Hoher erwarteter Schaden (damage_score={dmg_score:.3f})")
+                elif k == "Überlebens-Einschätzung":
+                    top_reasons.append(f"Gute Überlebenschance beim Switch (survival={survival:.3f})")
+                elif k == "Utility":
+                    top_reasons.append(f"Nützliche Status/Recovery-Moves (utility={util:.2f})")
+            # also add primary risk if exposure large
+            if exposure >= 0.4:
+                top_reasons.append(f"Vorsicht: hohe Verwundbarkeit gegen restliches Team (exposure={exposure:.2f})")
+
+            print(f" {i}. {own_name} — Score: {score}")
+            for r in top_reasons:
+                print(f"    - {r}")
+
+    # Ende Counter/Selection Block
 
     print("Analyse Ende")
 
