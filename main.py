@@ -1,5 +1,5 @@
 import global_infos
-import information_manager
+import info_manager
 import type_effectiveness
 from tqdm import tqdm # Importiere die tqdm-Bibliothek
 import math
@@ -122,7 +122,7 @@ def compute_best_damage_for_pair(attacker_pkm, attacker_name, defender_pkm, atta
             if not move_meta:
                 continue
             move_name = move_meta.get("Name", "")
-            move_in_cache = information_manager.get_attack_in_cache(move_name)
+            move_in_cache = info_manager.get_attack_in_cache(move_name)
 
             if move_in_cache:
                 power = _parse_power(move_name, move_in_cache)
@@ -176,7 +176,7 @@ def compute_best_damage_for_pair(attacker_pkm, attacker_name, defender_pkm, atta
                 }
 
     if best_calculation_details:
-        defender_name = information_manager.get_name_from_id(defender_pkm.get("ID"))
+        defender_name = info_manager.get_name_from_id(defender_pkm.get("ID"))
         details = best_calculation_details
 
         # GEÄNDERT: Ausgabe erweitert
@@ -192,7 +192,7 @@ def compute_best_damage_for_pair(attacker_pkm, attacker_name, defender_pkm, atta
         print("--------------------------------\n")
     else:
         # Sinnvollere Ausgabe, wenn keine Attacken gefunden wurden
-        print(f"Keine effektiven Attacken für {attacker_name} gegen {information_manager.get_name_from_id(defender_pkm.get('ID'))} gefunden.")
+        print(f"Keine effektiven Attacken für {attacker_name} gegen {info_manager.get_name_from_id(defender_pkm.get('ID'))} gefunden.")
 
     # GEÄNDERT: Gib den besten Schaden und den Namen der Attacke zurück
     return best_expected_damage, best_calculation_details.get('move_name')
@@ -220,7 +220,7 @@ def compute_utility_score_for_attacker(attacker_name, attacker_moves_list):
                 has_recovery = True
 
             # Status detection: prefer move_cache Kategorie, fallback auf move_meta
-            move_cache = information_manager.get_attack_in_cache(move_name) if move_name else None
+            move_cache = info_manager.get_attack_in_cache(move_name) if move_name else None
             cat = None
             if move_cache and isinstance(move_cache, dict):
                 cat = move_cache.get("Kategorie")
@@ -281,14 +281,79 @@ def get_farbigen_wert_string(wert: float) -> str:
 
     return f"\033[38;2;{r};{g};{b}m{wert_str}\033[0m"
 
+def calculate_survival_score(own_pkm_data: dict, opponent_pkm_data: dict, incoming_damage: float, outgoing_damage: float, vmin: float, vmax: float) -> float:
+    """
+    Berechnet einen Survival-Score, der die Initiative und OHKO-Potenzial berücksichtigt.
+
+    Args:
+        own_pkm_data: Das Daten-Dictionary des eigenen Pokémon.
+        opponent_pkm_data: Das Daten-Dictionary des gegnerischen Pokémon.
+        incoming_damage: Der beste erwartete Schaden, den der Gegner uns zufügt.
+        outgoing_damage: Der beste erwartete Schaden, den wir dem Gegner zufügen.
+        vmin, vmax: Normalisierungswerte für die Schadensberechnung.
+
+    Returns:
+        Einen Survival-Score zwischen 0.0 und 1.0.
+    """
+    # 1. Benötigte Statuswerte extrahieren
+    my_hp = own_pkm_data.get("Statuswerte", {}).get("KP", 1.0)
+    my_speed = own_pkm_data.get("Statuswerte", {}).get("Initiative", 0.0)
+
+    opponent_hp = opponent_pkm_data.get("Statuswerte", {}).get("KP", 1.0)
+    opponent_speed = opponent_pkm_data.get("Statuswerte", {}).get("Initiative", 0.0)
+
+    # Sicherstellen, dass HP nicht 0 ist, um Division durch Null zu vermeiden
+    my_hp = max(my_hp, 1.0)
+    opponent_hp = max(opponent_hp, 1.0)
+
+    # 2. Grundlegende Berechnungen vorbereiten
+
+    # Deine ursprüngliche Formel für den erlittenen Schaden in %
+    # (hier wird der normalisierte Schaden durch die KP geteilt)
+    scaled_incoming_damage = ((vmax - vmin) * incoming_damage + vmin)
+    damage_percentage_if_hit = min(scaled_incoming_damage / my_hp, 1.0)
+
+    # Der Survival-Score, WENN du getroffen wirst
+    survival_if_hit = 1.0 - damage_percentage_if_hit
+
+    # Prüfen, ob du den Gegner mit einem Schlag besiegen kannst
+    can_i_ohko_opponent = outgoing_damage >= opponent_hp
+
+    # 3. Die drei Szenarien basierend auf der Initiative auswerten
+
+    # Szenario 1: Du bist schneller
+    if my_speed > opponent_speed:
+        if can_i_ohko_opponent:
+            # Du besiegst den Gegner, bevor er angreifen kann.
+            return 1.0  # Perfektes Überleben
+        else:
+            # Du schlägst zuerst, aber der Gegner überlebt und schlägt zurück.
+            return survival_if_hit
+
+    # Szenario 2: Du bist langsamer
+    elif my_speed < opponent_speed:
+        # Du wirst immer zuerst getroffen.
+        return survival_if_hit
+
+    # Szenario 3: Speed Tie
+    else: # my_speed == opponent_speed
+        # Ergebnis, wenn du den Tie gewinnst (entspricht dem "schneller"-Szenario)
+        survival_if_win_tie = 1.0 if can_i_ohko_opponent else survival_if_hit
+
+        # Ergebnis, wenn du den Tie verlierst (entspricht dem "langsamer"-Szenario)
+        survival_if_lose_tie = survival_if_hit
+
+        # Der finale Score ist der Durchschnitt beider Ausgänge
+        return 0.5 * survival_if_win_tie + 0.5 * survival_if_lose_tie
+
 def main():
     print("Analyse Start")
 
-    opponent_data = information_manager.get_trainer_team_from_trainer_name(global_infos.opponent_trainer_name)[0]
+    opponent_data = info_manager.get_trainer_team_from_trainer_name(global_infos.opponent_trainer_name)[0]
     opponent_team = opponent_data["team"]
     print(" ~ Fetched Opponent Data")
     for opp_pkm_data in opponent_team:
-        print(f"   | {information_manager.get_name_from_id(opp_pkm_data['id'])} with {opp_pkm_data['moves']}")
+        print(f"   | {info_manager.get_name_from_id(opp_pkm_data['id'])} with {opp_pkm_data['moves']}")
 
     owned_list = global_infos.owned_pokemon_list
     print(" ~ Fetched Own Pokemon")
@@ -307,27 +372,27 @@ def main():
     # Preload move-lists for all Pokémon (schneller repeated access)
     moves_cache = {}
     for own_pkm_name in owned_list:
-        moves_cache[own_pkm_name] = information_manager.get_attacks_of_pokemon_as_list(own_pkm_name)
+        moves_cache[own_pkm_name] = info_manager.get_attacks_of_pokemon_as_list(own_pkm_name)
     print(" ~ Stored All Own Moves")
     opp_moves_cache = {}
     for opp_fight_data_pkm in opponent_team:
-        opp_name = information_manager.get_name_from_id(opp_fight_data_pkm["id"])
+        opp_name = info_manager.get_name_from_id(opp_fight_data_pkm["id"])
         pkm_attack_list = [[]]
         for move_name in opp_fight_data_pkm["moves"]:
-            pkm_attack_list[0].append(information_manager.get_attack_in_cache(move_name))
+            pkm_attack_list[0].append(info_manager.get_attack_in_cache(move_name))
         opp_moves_cache[opp_name] = pkm_attack_list
     print(" ~ Stored All Opponent Moves")
 
     with tqdm(total=total_iterations, desc="Gesamtanalyse") as pbar:
         # Spieler -> Gegner
         for own_pkm_name in owned_list:
-            own_pkm = information_manager.get_pokemon_in_cache(own_pkm_name)
+            own_pkm = info_manager.get_pokemon_in_cache(own_pkm_name)
             attacker_moves_list = moves_cache.get(own_pkm_name, [])
             raw_player_to_opponent.setdefault(own_pkm_name, {})
             best_move_player_to_opponent.setdefault(own_pkm_name, {})
             for opp_fight_data_pkm in opponent_team:
-                opp_name = information_manager.get_name_from_id(opp_fight_data_pkm["id"])
-                opp_pkm = information_manager.get_pokemon_in_cache(opp_name)
+                opp_name = info_manager.get_name_from_id(opp_fight_data_pkm["id"])
+                opp_pkm = info_manager.get_pokemon_in_cache(opp_name)
 
                 best_raw, best_move = compute_best_damage_for_pair(own_pkm, own_pkm_name, opp_pkm, attacker_moves_list)
                 raw_player_to_opponent[own_pkm_name][opp_name] = best_raw
@@ -337,13 +402,13 @@ def main():
 
         # Gegner -> Spieler
         for opp_fight_data_pkm in opponent_team:
-            opp_name = information_manager.get_name_from_id(opp_fight_data_pkm["id"])
-            opp_pkm = information_manager.get_pokemon_in_cache(opp_name)
+            opp_name = info_manager.get_name_from_id(opp_fight_data_pkm["id"])
+            opp_pkm = info_manager.get_pokemon_in_cache(opp_name)
             attacker_moves_list = opp_moves_cache.get(opp_name, [])
             raw_opponent_to_player.setdefault(opp_name, {})
             best_move_opponent_to_player.setdefault(opp_name, {})
             for own_pkm_name in owned_list:
-                own_pkm = information_manager.get_pokemon_in_cache(own_pkm_name)
+                own_pkm = info_manager.get_pokemon_in_cache(own_pkm_name)
 
                 best_raw, best_move = compute_best_damage_for_pair(opp_pkm, opp_name, own_pkm, attacker_moves_list)
                 raw_opponent_to_player[opp_name][own_pkm_name] = best_raw
@@ -412,7 +477,7 @@ def main():
         # exposure: average of damage_opponent_to_player[*][own_name]
         incoming = []
         for opp_b in opponent_team:
-            opp_name = information_manager.get_name_from_id(opp_b["id"])
+            opp_name = info_manager.get_name_from_id(opp_b["id"])
             val = damage_opponent_to_player.get(opp_name, {}).get(own_name)
             if val is not None:
                 incoming.append(val)
@@ -427,7 +492,7 @@ def main():
     for own_name in owned_list:
         counter_raw.setdefault(own_name, {})
         for opp_b in opponent_team:
-            opp_name = information_manager.get_name_from_id(opp_b["id"])
+            opp_name = info_manager.get_name_from_id(opp_b["id"])
 
             dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0)  # 0..1
             incoming_vs_own_from_opp = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0)  # 0..1
@@ -461,14 +526,14 @@ def main():
     else:
         # nothing computed
         for own_name in owned_list:
-            counter_score[own_name] = {information_manager.get_name_from_id(o["id"]): 50.0 for o in opponent_team}
+            counter_score[own_name] = {info_manager.get_name_from_id(o["id"]): 50.0 for o in opponent_team}
 
     print(" ~ Normalized Counter Scores")
 
         # Candidate selection per opponent: rank own pokemon by counter_score(P,G)
     print("\n=== Top Counters pro Gegner (Top {}) ===".format(MAX_TOP_PER_OPP))
     for opp_b in opponent_team:
-        opp_name = information_manager.get_name_from_id(opp_b["id"])
+        opp_name = info_manager.get_name_from_id(opp_b["id"])
         # build list
         ranked = []
         for own_name in owned_list:
@@ -476,7 +541,7 @@ def main():
             # compute contribution breakdown for explanation
             dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0) # todo change to hits till ko
             incoming = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0) # todo change to hits till ko
-            survival = 1.0 - min((((vmax - vmin) * incoming + vmin) / information_manager.get_pokemon_in_cache(own_name).get("Statuswerte")["KP"]), 1.0)
+            survival = calculate_survival_score(info_manager.get_pokemon_in_cache(own_name), info_manager.get_pokemon_in_cache(opp_name), incoming, dmg_score, vmin, vmax)
             print(f"(opp) {opp_name} gegen {own_name} (own) - survival={get_farbigen_wert_string(survival)}")
             util = utility_scores.get(own_name, 0.0)
             exposure = exposure_scores.get(own_name, 0.0)
