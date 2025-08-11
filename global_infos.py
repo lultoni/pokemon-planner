@@ -24,13 +24,15 @@ global_level_cap = 70
 grouping_key = "Art"
 minimum_strength_move = 70
 ALLOW_TP_MOVES = False
-# filter funktion wird nach der gegnerischen team analyse unten gemacht
+
+# filter funktion, wird nach der gegnerischen team analyse unten gemacht
 def filter_funktion_error(atk):
     # Beispiel: Suche nach Stahl-Attacken, die keine Status-Attacken sind
     return ((atk['Typ'] == 'Stahl'
              and atk['Kategorie'] != 'Status'
              and is_strong_enough(atk['Stärke'], minimum_strength_move))
             and is_allowed_level(atk['Level']))
+
 trainer_name = "asdf"
 backup_typen = ['Geist', 'Unlicht', 'Feuer', 'Boden']
 
