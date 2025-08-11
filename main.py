@@ -100,7 +100,7 @@ def determine_move_category(move_meta, move_in_cache, attacker_pkm):
     spatk = attacker_pkm["Statuswerte"].get("SpAngriff", 0)
     return "physisch" if atk >= spatk else "speziell"
 
-def compute_best_damage_for_pair(attacker_pkm, attacker_name, defender_pkm, attacker_moves_list):
+def compute_best_damage_for_pair(attacker_pkm, attacker_name, defender_pkm, attacker_moves_list, debug: bool = False):
     """
     Berechnet für einen Angreifer gegen einen Defender den besten *erwarteten Schaden*
     über alle Moves, unter Einbeziehung von STAB und Genauigkeit.
@@ -180,19 +180,21 @@ def compute_best_damage_for_pair(attacker_pkm, attacker_name, defender_pkm, atta
         details = best_calculation_details
 
         # GEÄNDERT: Ausgabe erweitert
-        print("\n--- Bester erwarteter Schaden ---")
-        print(f"Angreifer: {attacker_name}")
-        print(f"Verteidiger: {defender_name}")
-        print(f"Beste Attacke: {details['move_name']}")
-        print(f"Roher Schaden (vor Genauigkeit): {details['raw_damage']:.2f}")
-        print("-" * 20)
-        print(f"Formel: power * (att/def) * eff * STAB * accuracy")
-        print(f"Werte: {details['power']} * ({details['attack_stat']:.0f}/{details['defense_stat']:.0f}) * {details['effectiveness']} * {details['stab_bonus']} * {details['accuracy']}")
-        print(f"Erwarteter Schaden: {best_expected_damage:.2f}")
-        print("--------------------------------\n")
+        if debug:
+            print("\n--- Bester erwarteter Schaden ---")
+            print(f"Angreifer: {attacker_name}")
+            print(f"Verteidiger: {defender_name}")
+            print(f"Beste Attacke: {details['move_name']}")
+            print(f"Roher Schaden (vor Genauigkeit): {details['raw_damage']:.2f}")
+            print("-" * 20)
+            print(f"Formel: power * (att/def) * eff * STAB * accuracy")
+            print(f"Werte: {details['power']} * ({details['attack_stat']:.0f}/{details['defense_stat']:.0f}) * {details['effectiveness']} * {details['stab_bonus']} * {details['accuracy']}")
+            print(f"Erwarteter Schaden: {best_expected_damage:.2f}")
+            print("--------------------------------\n")
     else:
         # Sinnvollere Ausgabe, wenn keine Attacken gefunden wurden
-        print(f"Keine effektiven Attacken für {attacker_name} gegen {info_manager.get_name_from_id(defender_pkm.get('ID'))} gefunden.")
+        if debug:
+            print(f"Keine effektiven Attacken für {attacker_name} gegen {info_manager.get_name_from_id(defender_pkm.get('ID'))} gefunden.")
 
     # GEÄNDERT: Gib den besten Schaden und den Namen der Attacke zurück
     return best_expected_damage, best_calculation_details.get('move_name')
@@ -281,70 +283,54 @@ def get_farbigen_wert_string(wert: float) -> str:
 
     return f"\033[38;2;{r};{g};{b}m{wert_str}\033[0m"
 
-def calculate_survival_score(own_pkm_data: dict, opponent_pkm_data: dict, incoming_damage: float, outgoing_damage: float, vmin: float, vmax: float) -> float:
+def calculate_survival_score(own_pkm_data: dict, opponent_pkm_data: dict, incoming_damage: float, outgoing_damage: float, vmin: float, vmax: float, debug: bool = False) -> float:
     """
     Berechnet einen Survival-Score, der die Initiative und OHKO-Potenzial berücksichtigt.
+    Mit optionalem kompakten Debug-Output.
 
     Args:
         own_pkm_data: Das Daten-Dictionary des eigenen Pokémon.
         opponent_pkm_data: Das Daten-Dictionary des gegnerischen Pokémon.
-        incoming_damage: Der beste erwartete Schaden, den der Gegner uns zufügt.
-        outgoing_damage: Der beste erwartete Schaden, den wir dem Gegner zufügen.
-        vmin, vmax: Normalisierungswerte für die Schadensberechnung.
+        incoming_damage: Erwarteter Schaden vom Gegner.
+        outgoing_damage: Erwarteter Schaden am Gegner.
+        vmin, vmax: Normalisierungswerte.
+        debug: Ob Debug-Ausgabe erfolgen soll.
 
     Returns:
-        Einen Survival-Score zwischen 0.0 und 1.0.
+        Survival-Score zwischen 0.0 und 1.0.
     """
-    # 1. Benötigte Statuswerte extrahieren
-    my_hp = own_pkm_data.get("Statuswerte", {}).get("KP", 1.0)
+    # 1. Statuswerte extrahieren
+    my_hp = max(own_pkm_data.get("Statuswerte", {}).get("KP", 1.0), 1.0)
     my_speed = own_pkm_data.get("Statuswerte", {}).get("Initiative", 0.0)
-
-    opponent_hp = opponent_pkm_data.get("Statuswerte", {}).get("KP", 1.0)
+    opponent_hp = max(opponent_pkm_data.get("Statuswerte", {}).get("KP", 1.0), 1.0)
     opponent_speed = opponent_pkm_data.get("Statuswerte", {}).get("Initiative", 0.0)
 
-    # Sicherstellen, dass HP nicht 0 ist, um Division durch Null zu vermeiden
-    my_hp = max(my_hp, 1.0)
-    opponent_hp = max(opponent_hp, 1.0)
-
-    # 2. Grundlegende Berechnungen vorbereiten
-
-    # Deine ursprüngliche Formel für den erlittenen Schaden in %
-    # (hier wird der normalisierte Schaden durch die KP geteilt)
+    # 2. Schaden berechnen
     scaled_incoming_damage = ((vmax - vmin) * incoming_damage + vmin)
     damage_percentage_if_hit = min(scaled_incoming_damage / my_hp, 1.0)
-
-    # Der Survival-Score, WENN du getroffen wirst
     survival_if_hit = 1.0 - damage_percentage_if_hit
+    can_i_ohko_opponent = ((vmax - vmin) * outgoing_damage + vmin) >= opponent_hp
 
-    # Prüfen, ob du den Gegner mit einem Schlag besiegen kannst
-    can_i_ohko_opponent = outgoing_damage >= opponent_hp
+    if debug:
+        print(f"[SurvivalScore] Own: HP={my_hp}, Speed={my_speed} | Opponent: HP={opponent_hp}, Speed={opponent_speed}")
+        print(f"[SurvivalScore] IncomingDamage(raw)={incoming_damage:.2f}, Scaled={scaled_incoming_damage:.2f}, Damage%={damage_percentage_if_hit:.2%}")
+        print(f"[SurvivalScore] SurvivalIfHit={survival_if_hit:.2f}, CanOHKO={can_i_ohko_opponent}")
 
-    # 3. Die drei Szenarien basierend auf der Initiative auswerten
-
-    # Szenario 1: Du bist schneller
+    # 3. Szenarien auswerten
     if my_speed > opponent_speed:
-        if can_i_ohko_opponent:
-            # Du besiegst den Gegner, bevor er angreifen kann.
-            return 1.0  # Perfektes Überleben
-        else:
-            # Du schlägst zuerst, aber der Gegner überlebt und schlägt zurück.
-            return survival_if_hit
-
-    # Szenario 2: Du bist langsamer
+        result = 1.0 if can_i_ohko_opponent else survival_if_hit
+        if debug: print(f"[SurvivalScore] Szenario: Schneller → Score={result:.2f}")
+        return result
     elif my_speed < opponent_speed:
-        # Du wirst immer zuerst getroffen.
+        if debug: print(f"[SurvivalScore] Szenario: Langsamer → Score={survival_if_hit:.2f}")
         return survival_if_hit
-
-    # Szenario 3: Speed Tie
-    else: # my_speed == opponent_speed
-        # Ergebnis, wenn du den Tie gewinnst (entspricht dem "schneller"-Szenario)
+    else:
         survival_if_win_tie = 1.0 if can_i_ohko_opponent else survival_if_hit
-
-        # Ergebnis, wenn du den Tie verlierst (entspricht dem "langsamer"-Szenario)
         survival_if_lose_tie = survival_if_hit
-
-        # Der finale Score ist der Durchschnitt beider Ausgänge
-        return 0.5 * survival_if_win_tie + 0.5 * survival_if_lose_tie
+        result = 0.5 * survival_if_win_tie + 0.5 * survival_if_lose_tie
+        if debug:
+            print(f"[SurvivalScore] Szenario: Speed Tie → WinTie={survival_if_win_tie:.2f}, LoseTie={survival_if_lose_tie:.2f}, Score={result:.2f}")
+        return result
 
 def main():
     print("Analyse Start")
@@ -534,19 +520,19 @@ def main():
     print("\n=== Top Counters pro Gegner (Top {}) ===".format(MAX_TOP_PER_OPP))
     for opp_b in opponent_team:
         opp_name = info_manager.get_name_from_id(opp_b["id"])
-        # build list
         ranked = []
         for own_name in owned_list:
             score = counter_score.get(own_name, {}).get(opp_name, 0.0)
-            # compute contribution breakdown for explanation
-            dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0) # todo change to hits till ko
-            incoming = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0) # todo change to hits till ko
-            survival = calculate_survival_score(info_manager.get_pokemon_in_cache(own_name), info_manager.get_pokemon_in_cache(opp_name), incoming, dmg_score, vmin, vmax)
-            print(f"(opp) {opp_name} gegen {own_name} (own) - survival={get_farbigen_wert_string(survival)}")
+            dmg_score = damage_player_to_opponent.get(own_name, {}).get(opp_name, 0.0)
+            incoming = damage_opponent_to_player.get(opp_name, {}).get(own_name, 0.0)
+            survival = calculate_survival_score(
+                info_manager.get_pokemon_in_cache(own_name),
+                info_manager.get_pokemon_in_cache(opp_name),
+                incoming, dmg_score, vmin, vmax
+            )
             util = utility_scores.get(own_name, 0.0)
             exposure = exposure_scores.get(own_name, 0.0)
 
-            # contributions (weighted)
             contribs = {
                 "Schaden": global_infos.w_dmg * dmg_score,
                 "Überlebens-Einschätzung": global_infos.w_surv * survival,
@@ -554,36 +540,22 @@ def main():
                 "Exposure-Penalty": -global_infos.w_expo * exposure
             }
 
-            # best moves (Names) — falls nicht vorhanden -> 'Unknown'
             own_best_move = best_move_player_to_opponent.get(own_name, {}).get(opp_name) or "Unknown"
             opp_best_move = best_move_opponent_to_player.get(opp_name, {}).get(own_name) or "Unknown"
 
-            ranked.append((own_name, score, contribs, dmg_score, survival, util, exposure, own_best_move, opp_best_move))
-        # sort desc by score
+            ranked.append((own_name, score, contribs, dmg_score, survival, util, exposure, own_best_move, opp_best_move, incoming))
         ranked.sort(key=lambda x: x[1], reverse=True)
 
         print("\nGegner: {}".format(opp_name))
-        for i, (own_name, score, contribs, dmg_score, survival, util, exposure, own_best_move, opp_best_move) in enumerate(ranked[:MAX_TOP_PER_OPP], start=1):
-            # build top reason lines: pick top 2 positive contributors
-            pos_contribs = [(k, v) for k, v in contribs.items() if v > 0]
-            pos_contribs.sort(key=lambda x: x[1], reverse=True)
-            top_reasons = []
-            for k, v in pos_contribs[:2]:
-                if k == "Schaden":
-                    top_reasons.append(f"Hoher erwarteter Schaden (damage_score={get_farbigen_wert_string(dmg_score)})")
-                elif k == "Überlebens-Einschätzung":
-                    top_reasons.append(f"Gute Überlebenschance beim Switch (survival={get_farbigen_wert_string(survival)})")
-                elif k == "Utility":
-                    top_reasons.append(f"Nützliche Status/Recovery-Moves (utility={get_farbigen_wert_string(util)})")
-            if exposure >= 0.4:
-                top_reasons.append(f"Vorsicht: hohe Verwundbarkeit gegen restliches Team (exposure={get_farbigen_wert_string(exposure)})")
-
-            print(f" {i}. {own_name} — Score: {score}")
-            # Show best moves
+        for i, (own_name, score, contribs, dmg_score, survival, util, exposure, own_best_move, opp_best_move, incoming) in enumerate(ranked[:MAX_TOP_PER_OPP], start=1):
+            print(f" {i}. {own_name} — Gesamt-Score: {score:.3f}")
             print(f"    - Top Move (eigener): {own_best_move} — gesch. Schaden : {((vmax - vmin) * dmg_score + vmin):.3f}")
             print(f"    - Top Move (Gegner): {opp_best_move} — gesch. incoming : {((vmax - vmin) * incoming + vmin):.3f}")
-            for r in top_reasons:
-                print(f"    - {r}")
+            print(f"    - Rohwerte:")
+            print(f"        Schaden-Score: {get_farbigen_wert_string(dmg_score)} (Gewichtung: {contribs['Schaden']:.3f})")
+            print(f"        Survival-Score: {get_farbigen_wert_string(survival)} (Gewichtung: {contribs['Überlebens-Einschätzung']:.3f})")
+            print(f"        Utility-Score: {get_farbigen_wert_string(util)} (Gewichtung: {contribs['Utility']:.3f})")
+            print(f"        Exposure-Score: {get_farbigen_wert_string(exposure)} (Gewichtung: {contribs['Exposure-Penalty']:.3f})")
 
     print("Analyse Ende")
 
