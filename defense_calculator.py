@@ -59,7 +59,7 @@ if type_chart:
             # Gehe jede Attacke des aktuellen Angreifers durch
             for attack_type in attacker_move_types:
                 # Ermittle die Effektivität dieser Attacke gegen den Verteidiger
-                effectiveness = type_effectiveness.get_effectiveness(type_chart, attack_type, information_manager.get_type_of_pokemon(defender_name))
+                effectiveness = type_effectiveness.get_effectiveness_from_type_chart(type_chart, attack_type, information_manager.get_type_of_pokemon(defender_name))
 
                 # Speichere die Effektivität (oder 'N/A' bei Fehler)
                 if effectiveness is None:

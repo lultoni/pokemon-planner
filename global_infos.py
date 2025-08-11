@@ -33,9 +33,6 @@ def filter_funktion_error(atk):
              and is_strong_enough(atk['Stärke'], minimum_strength_move))
             and is_allowed_level(atk['Level']))
 
-trainer_name = "asdf"
-backup_typen = ['Geist', 'Unlicht', 'Feuer', 'Boden']
-
 def is_allowed_level(level):
     if ALLOW_TP_MOVES:
         return True
@@ -69,3 +66,5 @@ owned_pokemon_list = [
     "Barrakiefa", "Garados", "Irokex", "Salanga", "Schlaraffel", "Laukaps",
     "Bronzong", "Snomnom", "Keifel", "Wailmer", "Kingler", "Rizeros"
 ]
+
+opponent_trainer_name = "Hop 4"

@@ -1,5 +1,6 @@
 import json
 import re
+import os
 from pathlib import Path
 
 import global_infos
@@ -125,6 +126,32 @@ def clean_wiki_links(value):
     if not value:
         return value
     return re.sub(r"\[\[(?:[^|\]]*\|)?([^\]]+)\]\]", r"\1", value)
+
+def get_all_fights(json_path: str = "information_storage/fight_data.json"):
+    """
+    Lädt alle Kämpfe aus der angegebenen JSON-Datei.
+    Erwartet, dass die Datei eine Liste von Fight-Objekten enthält.
+
+    :param json_path: Pfad zur JSON-Datei mit den Kämpfen
+    :return: Liste aller Kämpfe (leere Liste, wenn Datei fehlt/fehlerhaft ist)
+    """
+    if not os.path.exists(json_path):
+        print(f"[WARN] JSON-Datei nicht gefunden: {json_path}")
+        return []
+
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if not isinstance(data, list):
+            print("[WARN] JSON enthält keine Liste.")
+            return []
+
+        return data
+
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] JSON-Parsing fehlgeschlagen: {e}")
+        return []
 
 def main():
     raw_text = RAW_FILE.read_text(encoding="utf-8")

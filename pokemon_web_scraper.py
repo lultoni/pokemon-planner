@@ -495,23 +495,31 @@ def build_pokemon_entry(pokemon_name: str) -> Optional[Dict]:
     }
 
 
-def save_to_cache(pokemon_name: str, data: Dict, filename: str = global_infos.POKEMON_CACHE_FILE_PATH):
+def save_to_cache_if_missing(pokemon_name: str, data: Dict, filename: str = global_infos.POKEMON_CACHE_FILE_PATH):
+    """
+    Speichert ein Pokémon nur dann im Cache, wenn es noch nicht vorhanden ist.
+    """
     if os.path.exists(filename):
         with open(filename, "r", encoding="utf-8") as f:
             cache = json.load(f)
     else:
         cache = {}
 
-    cache[pokemon_name] = data
-
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(cache, f, indent=4, ensure_ascii=False)
-    print(f"✅ {pokemon_name} wurde gespeichert.")
+    if pokemon_name not in cache:
+        cache[pokemon_name] = data
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(cache, f, indent=4, ensure_ascii=False)
+        print(f"✅ {pokemon_name} wurde neu im Cache gespeichert.")
+    # Falls es schon existiert, wird nichts gemacht
+    return cache[pokemon_name]
 
 
 def get_pokemon_from_wiki(pokemon_name: str):
+    """
+    Holt Pokémon-Daten aus dem Wiki.
+    Speichert sie nur, falls nicht bereits im Cache vorhanden.
+    """
     entry = build_pokemon_entry(pokemon_name)
     if entry:
-        save_to_cache(pokemon_name, entry)
-        return entry
+        return save_to_cache_if_missing(pokemon_name, entry)
     return None

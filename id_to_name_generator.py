@@ -44,8 +44,12 @@ def load_json(file_path):
         return json.load(f)
 
 def get_german_name_by_id(poke_id, json_path=output_file):
+    poke_id = format_id_string(poke_id)
     data = load_json(json_path)
     return data.get(poke_id)
+
+def format_id_string(id: str):
+    return (4 - len(id)) * "0" + id
 
 if __name__ == "__main__":
     mapping = parse_pokemon_data(input_file)

@@ -3,6 +3,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 import attack_web_scraper
+import fight_to_json_generator
 import global_infos
 import id_to_name_generator
 from pokemon_web_scraper import get_pokemon_from_wiki
@@ -53,13 +54,21 @@ def get_pokemon_in_cache(name: str) -> Optional[Dict[str, Any]]:
     Returns:
         Ein Dictionary mit den Pokémon-Daten oder None, wenn es nicht gefunden wird.
     """
-    return get_pokemon_from_wiki(name)
+    ret = get_pokemon_from_wiki(name)
+    return ret
 
 def get_attack_in_cache(name: str):
     return attack_web_scraper.get_attack(name)
 
-def get_attacks_of_pokemon(name: str):
-    return get_pokemon_in_cache(name).get("Attacken")
+def get_attacks_of_pokemon(name: str) -> Optional[Dict[str, Any]]:
+    ret = get_pokemon_in_cache(name).get("Attacken")
+    return ret
+
+def get_attacks_of_pokemon_as_list(pokemon_name):
+    ret_list = list()
+    for attack_type, attack_list in get_attacks_of_pokemon(pokemon_name).items():
+        ret_list.append(attack_list)
+    return ret_list
 
 def get_attacken_of_pokemon_structured(pokemon_name: str, max_level: Optional[int] = None) -> List[Dict[str, Any]]:
     """
@@ -143,3 +152,25 @@ def get_attacken_of_pokemon_structured(pokemon_name: str, max_level: Optional[in
 
 def get_name_from_id(id: str):
     return id_to_name_generator.get_german_name_by_id(id)
+
+
+def get_trainer_team_from_trainer_name(trainer_name: str):
+    """
+    Sucht in allen Kämpfen nach Trainerteams anhand eines (Teil-)Namens.
+    Gibt eine Liste aller passenden Kämpfe zurück.
+
+    - trainer_name: Suchstring oder exakter Name
+    - None oder leerer String -> leere Liste
+    """
+    if not trainer_name or not trainer_name.strip():
+        return []  # Kein Name -> nichts gefunden
+
+    trainer_name = trainer_name.strip().lower()
+    matches = []
+
+    for fight in fight_to_json_generator.get_all_fights():
+        fight_name = fight.get("trainer_name", "")
+        if fight_name and trainer_name in fight_name.lower():
+            matches.append(fight)
+
+    return matches

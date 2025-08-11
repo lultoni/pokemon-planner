@@ -194,7 +194,6 @@ def get_attack(attack_name: str, filename: Optional[str] = None) -> Optional[Dic
             with open(filename, "r", encoding="utf-8") as f:
                 cache = json.load(f)
             if attack_name in cache:
-                print(f"ℹ️ '{attack_name}' aus dem Cache geladen.")
                 return cache[attack_name]
         except (json.JSONDecodeError, IOError):
             pass  # Cache ist korrupt oder leer, wird überschrieben
