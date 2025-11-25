@@ -337,7 +337,11 @@ def main():
 
     opponent_data = info_manager.get_trainer_team_from_trainer_name(global_infos.opponent_trainer_name)[0]
     opponent_team = opponent_data["team"]
-    print(" ~ Fetched Opponent Data")
+    if opponent_data:
+        print(" ~ Fetched Opponent Data")
+    else:
+        print("Keinen Opponent Data vorhanden. Abbruch.")
+        return
     for opp_pkm_data in opponent_team:
         print(f"   | {info_manager.get_name_from_id(opp_pkm_data['id'])} with {opp_pkm_data['moves']}")
 

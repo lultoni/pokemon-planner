@@ -433,7 +433,7 @@
   {
     "edition": "SWSH",
     "trainer_class": "Champ",
-    "trainer_name": "Delion",
+    "trainer_name": "Delion_1",
     "name": "Delion",
     "reward_info": null,
     "hint": null,
@@ -5313,7 +5313,7 @@
   {
     "edition": "SWSH",
     "trainer_class": "Champ",
-    "trainer_name": "Delion",
+    "trainer_name": "Delion_2",
     "name": "Delion",
     "reward_info": null,
     "hint": "Das Team von [[Delion]] wenn {{#icon:816",
@@ -7560,7 +7560,7 @@
   {
     "edition": "SWSH",
     "trainer_class": "Pokémon-Trainer",
-    "trainer_name": "Delion",
+    "trainer_name": "Delion_3",
     "name": "Delion",
     "reward_info": "Delion SWSH",
     "hint": "Das Team von [[Delion]] wenn {{#icon:816",
@@ -9794,7 +9794,7 @@
   {
     "edition": "SWSH",
     "trainer_class": "Pokémon-Trainer",
-    "trainer_name": "Delion",
+    "trainer_name": "Delion_4",
     "name": "Delion",
     "reward_info": "Delion SWSH",
     "hint": "Das Team von [[Delion]] wenn {{#icon:816",
@@ -10680,7 +10680,7 @@
   {
     "edition": "SWSH",
     "trainer_class": "Pokémon-Trainer",
-    "trainer_name": "Delion",
+    "trainer_name": "Delion_5",
     "name": "Delion",
     "reward_info": "Delion SWSH",
     "hint": null,

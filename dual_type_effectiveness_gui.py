@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import os
 
-import global_infos
+from global_infos import *
 from type_effectiveness import load_type_effectiveness_data, get_type_matchups
 
 class TypeEffectivenessApp:
@@ -28,7 +28,7 @@ class TypeEffectivenessApp:
         self.setup_result_table()
 
     def load_type_icons(self):
-        for typ in global_infos.pokemon_types:
+        for typ in pokemon_types:
             normal_path = os.path.join(TYPE_ICON_FOLDER, TYPE_ICON_FILENAME_PATTERN.format(typ=typ))
             faded_path = os.path.join(TYPE_ICON_FOLDER, TYPE_ICON_FILENAME_PATTERN.format(typ=typ).replace(".png", "_faded.png"))
             try:
@@ -43,7 +43,7 @@ class TypeEffectivenessApp:
         frame = ttk.LabelFrame(self.root, text="Typen auswählen")
         frame.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        for i, typ in enumerate(global_infos.pokemon_types):
+        for i, typ in enumerate(pokemon_types):
             row = i % 6
             col = i // 6
             image = self.tk_images.get(typ)

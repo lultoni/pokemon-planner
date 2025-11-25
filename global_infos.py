@@ -37,7 +37,7 @@ starter_pokemon_list = [
 # - 0 (Pflanze)
 # - 3 (Feuer)
 # - 6 (Wasser)
-starter_pokemon = starter_pokemon_list[6]
+starter_pokemon = starter_pokemon_list[3]
 
 default_strength_move = 10
 
@@ -48,10 +48,22 @@ w_util = 0.5
 w_expo = 1.0
 
 owned_pokemon_list = [
-    "Vulnona", "Rexblisar", "Flunschlik", "Golgantes", "Strepoli", "Piondragi",
-    "Intelleon", "Psiaugon", "Smogon", "Schalellos", "Olangaar", "Maritellit",
-    "Barrakiefa", "Garados", "Irokex", "Salanga", "Schlaraffel", "Laukaps",
-    "Bronzong", "Snomnom", "Keifel", "Wailmer", "Kingler", "Rizeros"
+    "Liberlo", "Raichu", "Garados", "Roserade", "Hippoterus", "Krarmor",
+    "Lecryodon", "Maxax", "Strepoli", "eF-eM", "Patinaraja", "Smettbo",
+    "Gaunux", "Kaocto", "Kamalm", "Gladiantri", "Olangaar", "Geradaks",
+    "Karadonis", "Rotomurf", "Zigzachs", "Frizelbliz", "Voldi", "Pampuli",
+    "Felilou", "Mebrana", "Schmerbe", "Schallquap", "Kamehaps", "Eguana",
+    "Pikachu", "Wingull", "Fasasnob", "Infernopod", "Knospi", "Wommel",
+    "Scoppel", "Arktip", "Navitaub", "Bähmon", "Krabby", "Drifzepeli",
+    "Natu", "Fermicula", "Hypnomorba", "Zurrokex", "Shnebedeck", "Duflor",
+    "Thanathora", "Krebutack", "Roselia", "Amfira", "Myrapla", "Remoraid",
+    "Flegmon", "Vulnona", "Picochilla", "Britzigel", "Austos", "Botogel",
+    "Arktilas", "Pandagro", "Symvolara", "Stahlos", "Voltula", "Bellektro",
+    "Petznief", "Snibunna", "Skuntank", "Tentantel", "Flunschlik", "Onix",
+    "Morlord", "Lanturn", "Castellith", "Togetic", "Noctuh", "Stahlos",
+    "Meistagrif", "Qurtel", "Resladero", "Laternecto", "Branawarz", "Voltenso",
+    "Kapoera"
+    # "", "", "", "", "", "",
 ]
 
-opponent_trainer_name = "Hop 4"
+opponent_trainer_name = "Delion_2"
