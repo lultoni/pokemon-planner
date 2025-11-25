@@ -214,25 +214,181 @@ for pname, pdata in pokemon_cache.items():
         if t and t in type_list:
             t_pokemon_typen_rows.append([str(pid), sql_str_escape(t)])
 
-# T_Evolutions_Methoden and T_Entwicklung
-method_set = set()
+import re
+
+# --- Hilfsfunktionen (falls du sql_str_escape bereits hast, behalte sie, sonst einfach übernehmen) ---
+def remove_wiki_markup(s: str) -> str:
+    """Rudimentäre Entfernung/Wandlung von Wiki-Markups:
+       [[Ziel|Anzeigename]] -> Anzeigename, [[Ziel]] -> Ziel, HTML Entities -> lesbar."""
+    if not s:
+        return s
+    # Pipe-Auswahl: [[A|B]] -> B
+    s = re.sub(r'\[\[([^|\]]*\|)?([^\]]+)\]\]', r'\2', s)
+    # Entferne Dateiverweise etc.
+    s = re.sub(r'\[\[Datei:[^\]]+\]\]', '', s)
+    # Entferne {{...}} Vorlagen (nur grob)
+    s = re.sub(r'\{\{[^}]+\}\}', '', s)
+    # HTML Entities &lt; &gt; &amp;nbsp; -> lesbar
+    s = s.replace('&amp;nbsp;', ' ').replace('&lt;br /&gt;', ' ').replace('&lt;br /&gt;', ' ')
+    s = re.sub(r'&[^;\s]+;', ' ', s)
+    # Mehrfachspaces reduzieren
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s
+
+# Liste von Regionstokens, die NICHT zur 1. Gen (Kanto) gehören -> Filter
+_non_kanto_tokens = [
+    'Alola','Galar','Paldea','Hisui','Kalos','Hoenn','Sinnoh',
+    # Abkürzungen / Spielcodes, die auf neuere Spiele hinweisen
+    'PLA','PLZA','SW','SH','OR','AS','LGP','LGE',
+    # explizite Hinweise auf Generationen >1
+    'Gen.', 'Spielgeneration'  # (falls du statt regionsbasiert noch Generationen filtern willst)
+]
+
+# Regex, das typische "Stein"-/Item-Namen erkennt (deutsch, einfache Form)
+_stone_re = re.compile(
+    r'\b(Blattstein|Donnerstein|Eisstein|Feuerstein|Mondstein|Sonnenstein|Wasserstein'
+    r'|Schwarzaugit|Galarnuss(?:-Kranz|-Reif)?|King-Stein|Magmaisierer|Metallmantel'
+    r'|Schützer|Stromisierer|Upgrade|Drachenschuppe|Dubiosdisc|Ewigstein'
+    r'|Glücksrauch|Lahmrauch|Schrägrauch)\b',
+    flags=re.IGNORECASE
+)
+
+# Kürzungs-/Klassifizierungslogik
+def classify_and_shorten(raw: str):
+    """
+    Nimmt die lange Methode (raw) und gibt zurück:
+      (keep: bool, method_short: str or None, stein_name: str or None)
+    Regeln:
+      - Wenn Region außerhalb 1.Genomy erwähnt -> drop (keep False)
+      - Wenn 'Form' erwähnt -> drop (keep False)
+      - Wenn Stein/Item erkannt -> stein_name gesetzt, method_short in Form 'Stein anwenden' oder 'Item anwenden'
+      - Sonst heuristische Kürzung (Levelaufstieg, nach Tausch, schlüpft bei Zucht, etc.)
+    """
+    if not raw:
+        return False, None, None
+
+    cleaned = remove_wiki_markup(raw)
+
+    # Filter: Erwähnung von "Form" (ambigue Formen) -> raus
+    if re.search(r'\bForm\b', cleaned, flags=re.IGNORECASE):
+        return False, None, None
+
+    # Filter: Regions-/Spielhinweise außerhalb Gen1 -> raus
+    for tok in _non_kanto_tokens:
+        if tok.lower() in cleaned.lower():
+            return False, None, None
+
+    # Suche Stein/Item
+    m = _stone_re.search(cleaned)
+    if m:
+        stein = m.group(1)
+        stein = stein.strip()
+        # Normalisiere Schreibweise (z.B. einheitliche Großschreibung)
+        stein = stein[0].upper() + stein[1:]
+        # Methoden-Text: kurz und treffsicher
+        if stein.lower().endswith('stein'):
+            method_short = 'Stein anwenden'
+        else:
+            method_short = 'Item anwenden'
+        return True, method_short, stein
+
+    # Heuristiken für andere Fälle (Level, Tausch, Zucht, Kampf, Wettbewerb, etc.)
+    lc = cleaned.lower()
+
+    # Levelaufstiege (ggf. mit nacht/tag)
+    if 'level' in lc or 'ab level' in lc or re.search(r'\bab \[?\[?Level', raw, flags=re.IGNORECASE):
+        # versuche Levelzahl zu extrahieren
+        lv_match = re.search(r'ab\s+\[\[Level\]\].*?(\d{1,3})', raw)
+        if not lv_match:
+            lv_match = re.search(r'\b(ab|bei)\s*level\s*(\d{1,3})', lc)
+            if lv_match:
+                lv = lv_match.group(2)
+            else:
+                lv = None
+        else:
+            lv = lv_match.group(1)
+        zeit = None
+        if 'nachts' in lc:
+            zeit = ' (nachts)'
+        elif 'tagsüber' in lc or 'tags' in lc:
+            zeit = ' (tagsüber)'
+        if lv:
+            method_short = f'ab Level {lv}'
+        else:
+            method_short = 'Levelaufstieg'
+        if zeit:
+            method_short += zeit
+        return True, method_short, None
+
+    # Tausch
+    if 'tausch' in lc:
+        # wenn Item erwähnt => nach Tausch (Item)
+        item = _stone_re.search(cleaned)
+        if item:
+            return True, 'nach Tausch (Item)', item.group(1)
+        return True, 'nach Tausch', None
+
+    # Zucht / Ei
+    if 'zucht' in lc or 'ei' in lc:
+        return True, 'schlüpft bei Zucht', None
+
+    # Kampf / Gigadynamax / Mega
+    if 'gigadynamax' in lc or 'gigadynamax' in cleaned.lower():
+        return True, 'Gigadynamax im Kampf', None
+    if 'mega-entwicklung' in lc or 'mega' in lc and 'entwicklung' in lc:
+        return True, 'Mega-Entwicklung im Kampf', None
+
+    # Wettbewerb / Kostümwahl
+    if 'wettbewerb' in lc or 'kostümwahl' in lc:
+        return True, 'Kostümwahl (Wettbewerb)', None
+
+    # einfache Zahlen-bedingung (z.B. "nach 20 Einsätzen")
+    match_after = re.search(r'nach\s+(\d+)\s+einsätzen', lc)
+    if match_after:
+        return True, f'nach {match_after.group(1)} Einsätzen', None
+
+    # Fallback: kurze, bereinigte Anfangsphrase (max 60 Zeichen)
+    short = cleaned.split('*')[0].strip()
+    short = (short[:60] + '...') if len(short) > 60 else short
+    # Wenn der Shorttext leer ist, verwerfen
+    if not short:
+        return False, None, None
+    return True, short, None
+
+# --- Integration in deinen bestehenden Block ---
+# (ersetze das alte method_set-Extraktionsstück durch das Folgende)
+
+method_map = {}   # key: (method_short, stein_name) -> id
+method_entries = []  # Liste der Tupel in definierter Reihenfolge
+
 for pname, pdata in pokemon_cache.items():
     raw_id = pdata.get("ID")
     pid = extract_number_from_id(raw_id)
     if pid is None or not (1 <= pid <= 151):
         continue
     for evo in (pdata.get("Entwicklungen") or []):
-        m = evo.get("Methode")
-        if m:
-            method_set.add(m)
+        m_raw = evo.get("Methode")
+        if not m_raw:
+            continue
+        keep, m_short, stein = classify_and_shorten(m_raw)
+        if not keep:
+            # gefiltert: entweder Form-bezogen oder Region außerhalb 1.Gen
+            continue
+        key = (m_short, stein)
+        if key not in method_map:
+            method_map[key] = len(method_map) + 1
+            method_entries.append(key)
 
-method_list = sorted(method_set)
-method_map = {m: i+1 for i, m in enumerate(method_list)}
+# Jetzt method_map enthält IDs, basierend auf der gekürzten Methode + Stein
 
+# Erzeuge t_methods_rows (wie in deinem ursprünglichen Skript)
 t_methods_rows = []
-for m, mid in method_map.items():
-    t_methods_rows.append([str(mid), sql_str_escape(m), "NULL"])
+for (m_short, stein), mid in zip(method_entries, range(1, len(method_entries)+1)):
+    # sql_str_escape bleibt wie in deinem Skript
+    stein_sql = f"'{stein}'" if stein is not None else "NULL"
+    t_methods_rows.append([str(mid), sql_str_escape(m_short), stein_sql])
 
+# Beim Erzeugen der T_Entwicklung Zeilen nutze die neue map:
 t_entwicklung_rows = []
 evo_counter = 1
 for pname, pdata in pokemon_cache.items():
@@ -243,8 +399,14 @@ for pname, pdata in pokemon_cache.items():
     for evo in (pdata.get("Entwicklungen") or []):
         to_raw = evo.get("ID")
         to_nr = extract_number_from_id(to_raw)
-        method = evo.get("Methode")
-        mid = method_map.get(method)
+        m_raw = evo.get("Methode")
+        if not m_raw:
+            continue
+        keep, m_short, stein = classify_and_shorten(m_raw)
+        if not keep:
+            continue
+        key = (m_short, stein)
+        mid = method_map.get(key)
         level = evo.get("Level")
         from_sql = str(from_nr)
         to_sql = str(to_nr) if (to_nr is not None and 1 <= to_nr <= 151) else "NULL"
