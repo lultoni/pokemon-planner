@@ -21,7 +21,10 @@ POKEMON_CACHE_FILE_PATH = os.path.join(
     BASE_DIR, "information_storage", "pokemon_knowledge_cache.json"
 )
 POKEMON_CACHE_FILE_PATH = os.path.abspath(POKEMON_CACHE_FILE_PATH)
-ATTACK_CACHE_FILE_PATH = os.path.join('information_storage', 'attack_cache.json')
+ATTACK_CACHE_FILE_PATH = os.path.join(
+    BASE_DIR, "information_storage", "attack_cache.json"
+)
+ATTACK_CACHE_FILE_PATH = os.path.abspath(ATTACK_CACHE_FILE_PATH)
 
 EFFECTIVENESS_GROUPS = [0.0, 0.25, 0.5, 1.0, 2.0, 4.0]
 EFFECTIVENESS_LABELS = ["0×", "¼×", "½×", "1×", "2×", "4×"]
