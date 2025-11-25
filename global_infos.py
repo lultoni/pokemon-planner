@@ -16,7 +16,11 @@ HEALING_MOVES = {
     "vitalglocke","heilung","aromakur","mutschub"  # "Heilblockade" ist kein Heil-Move, daher nicht enthalten
 }
 
-POKEMON_CACHE_FILE_PATH = os.path.join('information_storage', 'pokemon_knowledge_cache.json')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+POKEMON_CACHE_FILE_PATH = os.path.join(
+    BASE_DIR, "information_storage", "pokemon_knowledge_cache.json"
+)
+POKEMON_CACHE_FILE_PATH = os.path.abspath(POKEMON_CACHE_FILE_PATH)
 ATTACK_CACHE_FILE_PATH = os.path.join('information_storage', 'attack_cache.json')
 
 EFFECTIVENESS_GROUPS = [0.0, 0.25, 0.5, 1.0, 2.0, 4.0]
