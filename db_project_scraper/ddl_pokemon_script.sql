@@ -1,10 +1,7 @@
 USE data_test;
 
 -- -----------------------------------------------------
--- SCHRITT 0: ALTE TABELLEN LÖSCHEN (CLEANUP)
--- Wir deaktivieren kurz die Prüfung der Fremdschlüssel,
--- um Lösch-Fehler zu vermeiden.
--- -----------------------------------------------------
+
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS T_Pokemon_Attacken;
@@ -20,17 +17,20 @@ DROP TABLE IF EXISTS T_Typen;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- -----------------------------------------------------
--- SCHRITT 1: NEUE STRUKTUR ANLEGEN
--- -----------------------------------------------------
 
 -- 1. T_Typen
 CREATE TABLE T_Typen (
     Typ_Name VARCHAR(50) NOT NULL PRIMARY KEY
 );
 
--- 2. T_Lernmethoden (NEU)
+-- 2. T_Lernmethoden
 CREATE TABLE T_Lernmethoden (
-    Erlernmethode VARCHAR(50) NOT NULL PRIMARY KEY
+    Lernmethode_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    Art VARCHAR(50) NOT NULL, -- z.B. 'Level-Up', 'TM', 'Zucht'
+    Level INT UNSIGNED DEFAULT NULL CHECK (Level BETWEEN 1 AND 100), -- Das Level wenn dies die Art ist
+    Voraussetzung VARCHAR(100) DEFAULT NULL, -- z.B. 'TM05' oder 'Regen'
+
+    UNIQUE KEY uk_methode_def (Art, Level, Voraussetzung)
 );
 
 -- 3. T_Attacken
@@ -40,7 +40,7 @@ CREATE TABLE T_Attacken (
     Genauigkeit INT UNSIGNED DEFAULT NULL CHECK (Genauigkeit BETWEEN 0 AND 100),
     AP INT UNSIGNED NOT NULL DEFAULT 0,
     Typ_Name VARCHAR(50) NOT NULL,
-    
+
     CONSTRAINT fk_attacken_typ FOREIGN KEY (Typ_Name)
         REFERENCES T_Typen (Typ_Name)
         ON UPDATE CASCADE
@@ -64,7 +64,7 @@ CREATE TABLE T_Basis_Stats (
     Sp_Angriff INT UNSIGNED NOT NULL,
     Sp_Verteidigung INT UNSIGNED NOT NULL,
     Initiative INT UNSIGNED NOT NULL,
-    
+
     CONSTRAINT fk_basis_pokemon FOREIGN KEY (Pokedex_Nr)
         REFERENCES T_Pokemon (Pokedex_Nr)
         ON UPDATE CASCADE
@@ -76,7 +76,7 @@ CREATE TABLE T_Pokemon_Typen (
     Pokedex_Nr INT UNSIGNED NOT NULL,
     Typ_Name VARCHAR(50) NOT NULL,
     PRIMARY KEY (Pokedex_Nr, Typ_Name),
-    
+
     CONSTRAINT fk_poktyp_pokemon FOREIGN KEY (Pokedex_Nr)
         REFERENCES T_Pokemon (Pokedex_Nr)
         ON UPDATE CASCADE
@@ -96,8 +96,7 @@ CREATE TABLE T_Evolutions_Methoden (
     UNIQUE KEY uk_evo_method_stein (Methoden_Name, Stein_Name)
 );
 
-DROP TABLE IF EXISTS T_Entwicklung;
-
+-- 8. T_Entwicklung
 CREATE TABLE T_Entwicklung (
     Evolutions_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Von_Pokemon_Nr INT UNSIGNED NOT NULL,
@@ -107,22 +106,19 @@ CREATE TABLE T_Entwicklung (
 
     CONSTRAINT fk_entw_von FOREIGN KEY (Von_Pokemon_Nr)
         REFERENCES T_Pokemon (Pokedex_Nr)
-        -- WICHTIG: Hier muss RESTRICT stehen, sonst Fehler 3823
-        ON UPDATE RESTRICT 
-        ON DELETE RESTRICT,
-        
-    CONSTRAINT fk_entw_zu FOREIGN KEY (Zu_Pokemon_Nr)
-        REFERENCES T_Pokemon (Pokedex_Nr)
-        -- WICHTIG: Hier muss RESTRICT stehen, sonst Fehler 3823
         ON UPDATE RESTRICT
         ON DELETE RESTRICT,
-        
+
+    CONSTRAINT fk_entw_zu FOREIGN KEY (Zu_Pokemon_Nr)
+        REFERENCES T_Pokemon (Pokedex_Nr)
+        ON UPDATE RESTRICT
+        ON DELETE RESTRICT,
+
     CONSTRAINT fk_entw_method FOREIGN KEY (Methode_ID)
         REFERENCES T_Evolutions_Methoden (Methode_ID)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
-
 CREATE INDEX idx_entw_von ON T_Entwicklung (Von_Pokemon_Nr);
 CREATE INDEX idx_entw_zu ON T_Entwicklung (Zu_Pokemon_Nr);
 
@@ -131,11 +127,9 @@ CREATE TABLE T_Pokemon_Attacken (
     Pokemon_Attacken_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Pokedex_Nr INT UNSIGNED NOT NULL,
     Attacke_Name VARCHAR(100) NOT NULL,
-    Erlernmethode VARCHAR(50) NOT NULL,
-    Level INT UNSIGNED DEFAULT NULL CHECK (Level BETWEEN 1 AND 100),
-    Voraussetzung VARCHAR(100) DEFAULT NULL,
-    
-    UNIQUE KEY uk_pokemon_attacke (Pokedex_Nr, Attacke_Name, Erlernmethode),
+    Lernmethode_ID INT NOT NULL,
+
+    UNIQUE KEY uk_pokemon_attacke (Pokedex_Nr, Attacke_Name, Lernmethode_ID),
 
     CONSTRAINT fk_pokatk_pokemon FOREIGN KEY (Pokedex_Nr)
         REFERENCES T_Pokemon (Pokedex_Nr)
@@ -147,10 +141,10 @@ CREATE TABLE T_Pokemon_Attacken (
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    CONSTRAINT fk_pokatk_methode FOREIGN KEY (Erlernmethode)
-        REFERENCES T_Lernmethoden (Erlernmethode)
+    CONSTRAINT fk_pokatk_methode FOREIGN KEY (Lernmethode_ID)
+        REFERENCES T_Lernmethoden (Lernmethode_ID)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
 );
 CREATE INDEX idx_pokatk_attacke ON T_Pokemon_Attacken (Attacke_Name);
-CREATE INDEX idx_pokatk_erlernmethode ON T_Pokemon_Attacken (Erlernmethode);
+CREATE INDEX idx_pokatk_lernid ON T_Pokemon_Attacken (Lernmethode_ID);
