@@ -435,7 +435,6 @@ INSERT INTO T_Attacken (Attacke_Name, Staerke, Genauigkeit, AP, Typ_Name) VALUES
 ('Turmkick', 85, 90, 20, 'Kampf'),
 ('Typenspiegel', NULL, NULL, 15, 'Normal'),
 ('Umwandlung', NULL, NULL, 30, 'Normal'),
-('Umwandlung2', NULL, NULL, NULL, 'None'),
 ('Vakuumwelle', 40, 100, 30, 'Kampf'),
 ('Vergeltung', 60, 100, 10, 'Kampf'),
 ('Verhöhner', NULL, 100, 20, 'None'),
@@ -10161,7 +10160,6 @@ INSERT INTO T_Pokemon_Attacken (Pokedex_Nr, Attacke_Name, Erlernmethode, Level, 
 (137, 'Magnetflug', 'LevelUp', 10, NULL),
 (137, 'Donnerschock', 'LevelUp', 15, NULL),
 (137, 'Psystrahl', 'LevelUp', 20, NULL),
-(137, 'Umwandlung2', 'LevelUp', 25, NULL),
 (137, 'Agilität', 'LevelUp', 30, NULL),
 (137, 'Genesung', 'LevelUp', 35, NULL),
 (137, 'Ladungsstoß', 'LevelUp', 40, NULL),
@@ -10373,10 +10371,10 @@ INSERT INTO T_Pokemon_Attacken (Pokedex_Nr, Attacke_Name, Erlernmethode, Level, 
 (140, 'Metallsound', 'LevelUp', 55, NULL),
 (140, 'Steinkante', 'LevelUp', 60, NULL),
 (140, 'Kreideschrei', 'TM', NULL, 'TM16'),
-(140, 'Erholung', 'TM', NULL, 'TM21');
+(140, 'Erholung', 'TM', NULL, 'TM21'),
+(140, 'Steinhagel', 'TM', NULL, 'TM22');
 
 INSERT INTO T_Pokemon_Attacken (Pokedex_Nr, Attacke_Name, Erlernmethode, Level, Voraussetzung) VALUES
-(140, 'Steinhagel', 'TM', NULL, 'TM22'),
 (140, 'Raub', 'TM', NULL, 'TM23'),
 (140, 'Schnarcher', 'TM', NULL, 'TM24'),
 (140, 'Schutzschild', 'TM', NULL, 'TM25'),
@@ -10875,10 +10873,10 @@ INSERT INTO T_Pokemon_Attacken (Pokedex_Nr, Attacke_Name, Erlernmethode, Level, 
 (145, 'Neck Strike', 'TP', NULL, 'TP95'),
 (146, 'Silberblick', 'LevelUp', 1, NULL),
 (146, 'Glut', 'LevelUp', 5, NULL),
-(146, 'Gegenstoß', 'LevelUp', 5, NULL);
+(146, 'Gegenstoß', 'LevelUp', 5, NULL),
+(146, 'Bodyguard', 'LevelUp', 10, NULL);
 
 INSERT INTO T_Pokemon_Attacken (Pokedex_Nr, Attacke_Name, Erlernmethode, Level, Voraussetzung) VALUES
-(146, 'Bodyguard', 'LevelUp', 10, NULL),
 (146, 'Flügelschlag', 'LevelUp', 15, NULL),
 (146, 'Agilität', 'LevelUp', 20, NULL),
 (146, 'Antik-Kraft', 'LevelUp', 25, NULL),
@@ -11377,10 +11375,10 @@ INSERT INTO T_Pokemon_Attacken (Pokedex_Nr, Attacke_Name, Erlernmethode, Level, 
 (151, 'Regentanz', 'TM', NULL, 'TM33'),
 (151, 'Sonnentag', 'TM', NULL, 'TM34'),
 (151, 'Hagelsturm', 'TM', NULL, 'TM35'),
-(151, 'Whirlpool', 'TM', NULL, 'TM36');
+(151, 'Whirlpool', 'TM', NULL, 'TM36'),
+(151, 'Prügler', 'TM', NULL, 'TM37');
 
 INSERT INTO T_Pokemon_Attacken (Pokedex_Nr, Attacke_Name, Erlernmethode, Level, Voraussetzung) VALUES
-(151, 'Prügler', 'TM', NULL, 'TM37'),
 (151, 'Irrlicht', 'TM', NULL, 'TM38'),
 (151, 'Fassade', 'TM', NULL, 'TM39'),
 (151, 'Sternschauer', 'TM', NULL, 'TM40'),

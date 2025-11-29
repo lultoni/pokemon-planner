@@ -2,16 +2,12 @@
 """
 json_to_sql_export.py
 
-Exportiert JSON-Caches in SQL-Inserts passend zum aktuellen DDL:
-- T_Typen (Typ_Name)
-- T_Lernmethoden (Erlernmethode) -> NEU
-- T_Attacken (Attacke_Name, Staerke, Genauigkeit, AP, Typ_Name)
-- T_Pokemon (Pokedex_Nr, Pokemon_Name)
-- T_Basis_Stats
-- T_Pokemon_Typen (Pokedex_Nr, Typ_Name)
-- T_Evolutions_Methoden
-- T_Entwicklung (ohne NULL Ziele)
-- T_Pokemon_Attacken (ohne Duplikate bei Nr/Name/Methode)
+Exportiert JSON-Caches in SQL-Inserts passend zum aktuellen DDL.
+UPDATES:
+- Filtert Attacken ohne AP (AP is None) komplett raus.
+- Gibt gedroppte Attacken in der Konsole aus.
+- Verhindert FK-Fehler, indem gedroppte Attacken auch bei Pokemon ignoriert werden.
+- Dedupliziert Pokemon_Attacken Einträge.
 """
 
 import json
@@ -42,7 +38,6 @@ def extract_number_from_id(id_str):
     if id_str is None:
         return None
     s = str(id_str)
-    # Entferne führende Nullen, aber behalte die Zahl
     m = re.match(r'0*([0-9]+)', s)
     if m:
         return int(m.group(1))
@@ -56,7 +51,6 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 def write_batch_insert(f, table, columns, rows, batch_size=500):
-    """rows already contain SQL literals (strings like "'foo'", "NULL", "123")"""
     if not rows:
         return
     col_str = ", ".join(columns)
@@ -68,7 +62,7 @@ def write_batch_insert(f, table, columns, rows, batch_size=500):
 def remove_wiki_markup(s: str) -> str:
     if not s:
         return s
-    s = re.sub(r'\[\[([^|\]]*\|)?([^\]]+)\]\]', r'\2', s) # [[A|B]] -> B
+    s = re.sub(r'\[\[([^|\]]*\|)?([^\]]+)\]\]', r'\2', s)
     s = re.sub(r'\[\[Datei:[^\]]+\]\]', '', s)
     s = re.sub(r'\{\{[^}]+\}\}', '', s)
     s = s.replace('&amp;nbsp;', ' ').replace('&lt;br /&gt;', ' ')
@@ -94,12 +88,10 @@ def classify_and_shorten(raw: str):
         return False, None, None
     cleaned = remove_wiki_markup(raw)
 
-    # Filter Checks
     if re.search(r'\bForm\b', cleaned, flags=re.IGNORECASE): return False, None, None
     for tok in _non_kanto_tokens:
         if tok.lower() in cleaned.lower(): return False, None, None
 
-    # Stein Check
     m = _stone_re.search(cleaned)
     if m:
         stein = m.group(1).strip()
@@ -108,7 +100,6 @@ def classify_and_shorten(raw: str):
         return True, method_short, stein
 
     lc = cleaned.lower()
-    # Level
     if 'level' in lc or 'ab level' in lc:
         lv_match = re.search(r'ab\s+\[\[Level\]\].*?(\d{1,3})', raw)
         if not lv_match:
@@ -122,7 +113,6 @@ def classify_and_shorten(raw: str):
         elif 'tags' in lc: method_short += ' (tagsüber)'
         return True, method_short, None
 
-    # Tausch
     if 'tausch' in lc:
         item = _stone_re.search(cleaned)
         if item: return True, 'nach Tausch (Item)', item.group(1)
@@ -130,7 +120,6 @@ def classify_and_shorten(raw: str):
 
     if 'zucht' in lc or 'ei' in lc: return True, 'schlüpft bei Zucht', None
 
-    # Fallback
     short = cleaned.split('*')[0].strip()
     short = (short[:60] + '...') if len(short) > 60 else short
     if not short: return False, None, None
@@ -139,12 +128,10 @@ def classify_and_shorten(raw: str):
 
 # ---------------- paths ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Passe Pfade ggf. an deine Ordnerstruktur an
 JSON_POKEMON = os.path.abspath(os.path.join(BASE_DIR, "..", "information_storage", "pokemon_knowledge_cache.json"))
 JSON_ATTACKS = os.path.abspath(os.path.join(BASE_DIR, "..", "information_storage", "attack_cache.json"))
 OUTPUT_SQL = os.path.abspath(os.path.join(BASE_DIR, "pokemon_export.sql"))
 
-# ---------------- Gen1 types ----------------
 GEN1_TYPES = {
     "Normal","Feuer","Wasser","Elektro","Pflanze","Eis",
     "Kampf","Gift","Boden","Flug","Psycho","Käfer",
@@ -154,7 +141,6 @@ FALLBACK_TYPE = "None"
 
 # ---------------- load JSONs ----------------
 if not os.path.exists(JSON_POKEMON):
-    # Fallback für lokales Testen, falls Pfad abweicht
     JSON_POKEMON = "pokemon_knowledge_cache.json"
 
 pokemon_cache = {}
@@ -183,32 +169,28 @@ if os.path.exists(JSON_ATTACKS):
 type_set = set()
 attack_name_set = set()
 seen_pokemon_ids = set()
-all_lernmethoden_set = set() # Für T_Lernmethoden
+all_lernmethoden_set = set()
 
-# 1. Collect basic info
 for pname, pdata in pokemon_cache.items():
     raw_id = pdata.get("ID")
     pid = extract_number_from_id(raw_id)
     if pid is None or not (1 <= pid <= 151):
-        continue  # nur gen1
+        continue
     seen_pokemon_ids.add(pid)
 
-    # Types
     for t in (pdata.get("Typen") or []):
         if t and t in GEN1_TYPES:
             type_set.add(t)
 
-    # Attacks & Lernmethoden
     attacks = pdata.get("Attacken", {}) or {}
     for method, items in attacks.items():
         if method:
-            all_lernmethoden_set.add(method) # Sammle Methode
+            all_lernmethoden_set.add(method)
         for atk in items:
             name = atk.get("Name") if isinstance(atk, dict) else str(atk)
             if name:
                 attack_name_set.add(name)
 
-# Collect types from attack cache too
 for aname, ainfo in attack_cache.items():
     at = ainfo.get("Typ")
     if at and at in GEN1_TYPES:
@@ -225,20 +207,34 @@ lernmethoden_list = sorted(all_lernmethoden_set)
 # T_Typen
 t_typen_rows = [[sql_str_escape(t)] for t in type_list]
 
-# T_Lernmethoden (NEU)
+# T_Lernmethoden
 t_lernmethoden_rows = [[sql_str_escape(m)] for m in lernmethoden_list]
 
-# T_Attacken
+# T_Attacken (Jetzt mit AP-Filter)
 t_attacken_rows = []
+dropped_attacks = []        # Liste für die Konsole
+valid_attacks_set = set()   # Set für FK-Checks
+
 for name in attack_list:
     ainfo = attack_cache.get(name, {})
     typ = ainfo.get("Typ")
     typ_name = typ if (typ in type_list and typ in GEN1_TYPES) else FALLBACK_TYPE
+
+    raw_ap = ainfo.get("AP")
+
+    # NEU: Check ob AP vorhanden ist
+    if raw_ap is None:
+        dropped_attacks.append(name)
+        continue # Drop this attack, do NOT add to rows
+
+    # Wenn wir hier sind, ist die Attacke gültig
+    valid_attacks_set.add(name)
+
     t_attacken_rows.append([
         sql_str_escape(name),
         sql_int_or_null(ainfo.get("Stärke") or ainfo.get("Staerke")),
         sql_int_or_null(ainfo.get("Genauigkeit")),
-        sql_int_or_null(ainfo.get("AP")),
+        sql_int_or_null(raw_ap),
         sql_str_escape(typ_name)
     ])
 
@@ -271,7 +267,7 @@ for pname, pdata in pokemon_cache.items():
             t_pokemon_typen_rows.append([str(pid), sql_str_escape(t)])
 
 # T_Evolutions_Methoden & T_Entwicklung
-method_map = {} # Key: (short_name, stein) -> ID
+method_map = {}
 method_entries = []
 t_entwicklung_rows = []
 evo_counter = 1
@@ -283,15 +279,12 @@ for pname, pdata in pokemon_cache.items():
         continue
 
     for evo in (pdata.get("Entwicklungen") or []):
-        # 1. Check Target ID
         to_raw = evo.get("ID")
         to_nr = extract_number_from_id(to_raw)
 
-        # FILTER: Wenn ZU_Pokemon_Nr null ist oder nicht Gen1 -> DROP
         if to_nr is None or not (1 <= to_nr <= 151):
             continue
 
-        # 2. Check Methode
         m_raw = evo.get("Methode")
         if not m_raw:
             continue
@@ -299,7 +292,6 @@ for pname, pdata in pokemon_cache.items():
         if not keep:
             continue
 
-        # Methode registrieren falls neu
         key = (m_short, stein)
         if key not in method_map:
             method_map[key] = len(method_map) + 1
@@ -308,7 +300,6 @@ for pname, pdata in pokemon_cache.items():
         mid = method_map[key]
         level = evo.get("Level")
 
-        # Row erstellen
         t_entwicklung_rows.append([
             str(evo_counter),
             str(from_nr),
@@ -318,15 +309,14 @@ for pname, pdata in pokemon_cache.items():
         ])
         evo_counter += 1
 
-# Liste für T_Evolutions_Methoden bauen
 t_methods_rows = []
 for (m_short, stein), mid in zip(method_entries, range(1, len(method_entries)+1)):
     t_methods_rows.append([str(mid), sql_str_escape(m_short), sql_str_escape(stein)])
 
 
-# T_Pokemon_Attacken (Deduplication Logic)
+# T_Pokemon_Attacken
 t_pokemon_attack_rows = []
-seen_pokatk = set() # Set speichert (pokedex_nr, attack_name, erlernmethode)
+seen_pokatk = set()
 
 for pname, pdata in pokemon_cache.items():
     raw_id = pdata.get("ID")
@@ -341,11 +331,15 @@ for pname, pdata in pokemon_cache.items():
             if not name:
                 continue
 
-            # FILTER: Check Duplicates
-            # Key für Unique Constraint: Pokedex_Nr + Attacke_Name + Erlernmethode
+            # WICHTIG: Wenn die Attacke wegen fehlender AP gedropped wurde,
+            # darf sie hier NICHT rein (sonst FK Error)
+            if name not in valid_attacks_set:
+                continue
+
+            # Deduplizierung
             unique_key = (pid, name, method)
             if unique_key in seen_pokatk:
-                continue # DROP DUPLICATE
+                continue
 
             seen_pokatk.add(unique_key)
 
@@ -375,37 +369,36 @@ with open(OUTPUT_SQL, "w", encoding="utf-8") as out:
     out.write("SET FOREIGN_KEY_CHECKS = 0;\n\n")
 
     write_batch_insert(out, "T_Typen", ["Typ_Name"], t_typen_rows)
-
-    # Zuerst Lernmethoden (da FK in Pokemon_Attacken)
     write_batch_insert(out, "T_Lernmethoden", ["Erlernmethode"], t_lernmethoden_rows)
-
     write_batch_insert(out, "T_Attacken",
                        ["Attacke_Name", "Staerke", "Genauigkeit", "AP", "Typ_Name"],
                        t_attacken_rows)
-
     write_batch_insert(out, "T_Pokemon", ["Pokedex_Nr", "Pokemon_Name"], t_pokemon_rows)
-
     write_batch_insert(out, "T_Basis_Stats",
                        ["Pokedex_Nr", "KP", "Angriff", "Verteidigung", "Sp_Angriff", "Sp_Verteidigung", "Initiative"],
                        t_basis_rows)
-
     write_batch_insert(out, "T_Pokemon_Typen", ["Pokedex_Nr", "Typ_Name"], t_pokemon_typen_rows)
-
     write_batch_insert(out, "T_Evolutions_Methoden",
                        ["Methode_ID", "Methoden_Name", "Stein_Name"],
                        t_methods_rows)
-
     write_batch_insert(out, "T_Entwicklung",
                        ["Evolutions_ID", "Von_Pokemon_Nr", "Zu_Pokemon_Nr", "Methode_ID", "Level"],
                        t_entwicklung_rows)
-
     write_batch_insert(out, "T_Pokemon_Attacken",
                        ["Pokedex_Nr", "Attacke_Name", "Erlernmethode", "Level", "Voraussetzung"],
                        t_pokemon_attack_rows)
 
     out.write("SET FOREIGN_KEY_CHECKS = 1;\n")
 
+# ---------------- Reporting ----------------
 print(f"Export fertig: {OUTPUT_SQL}")
-print(f"Gefundene Lernmethoden: {len(lernmethoden_list)}")
-print(f"Pokemon Attacken Einträge (ohne Duplikate): {len(t_pokemon_attack_rows)}")
-print(f"Entwicklungen (nur gültige Ziele): {len(t_entwicklung_rows)}")
+print(f"Gültige Attacken exportiert: {len(t_attacken_rows)}")
+print(f"Verknüpfte Pokemon-Attacken: {len(t_pokemon_attack_rows)}")
+
+if dropped_attacks:
+    print(f"\n--- ACHTUNG: {len(dropped_attacks)} Attacken wurden wegen fehlender AP (NULL) ignoriert ---")
+    print("Diese Attacken fehlen auch in T_Pokemon_Attacken, um FK-Fehler zu vermeiden:")
+    for d in sorted(dropped_attacks):
+        print(f" - {d}")
+else:
+    print("\nKeine Attacken wegen fehlender AP gedropped.")
