@@ -105,9 +105,6 @@ CREATE TABLE T_Entwicklung (
     Methode_ID INT NOT NULL,
     Level INT UNSIGNED DEFAULT NULL CHECK (Level BETWEEN 1 AND 100),
 
-    -- Dieser Check funktioniert NUR, wenn unten 'ON UPDATE RESTRICT' steht
-    CONSTRAINT chk_evo_self CHECK (Von_Pokemon_Nr <> Zu_Pokemon_Nr),
-
     CONSTRAINT fk_entw_von FOREIGN KEY (Von_Pokemon_Nr)
         REFERENCES T_Pokemon (Pokedex_Nr)
         -- WICHTIG: Hier muss RESTRICT stehen, sonst Fehler 3823
