@@ -1,4 +1,4 @@
--- Auto-generated SQL export for NEW DDL
+-- Auto-generated SQL Insert Script
 USE data_test;
 SET FOREIGN_KEY_CHECKS = 0;
 

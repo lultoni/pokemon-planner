@@ -381,7 +381,7 @@ for pname, pdata in pokemon_cache.items():
 
 # ---------------- WRITE SQL ----------------
 with open(OUTPUT_SQL, "w", encoding="utf-8") as out:
-    out.write("-- Auto-generated SQL export for NEW DDL\n")
+    out.write("-- Auto-generated SQL Insert Script\n")
     out.write("USE data_test;\n")
     out.write("SET FOREIGN_KEY_CHECKS = 0;\n\n")
 

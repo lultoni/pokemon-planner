@@ -1,7 +1,5 @@
 USE data_test;
 
--- -----------------------------------------------------
-
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS T_Pokemon_Attacken;
@@ -16,24 +14,19 @@ DROP TABLE IF EXISTS T_Typen;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- -----------------------------------------------------
-
--- 1. T_Typen
 CREATE TABLE T_Typen (
     Typ_Name VARCHAR(50) NOT NULL PRIMARY KEY
 );
 
--- 2. T_Lernmethoden
 CREATE TABLE T_Lernmethoden (
     Lernmethode_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    Art VARCHAR(50) NOT NULL, -- z.B. 'Level-Up', 'TM', 'Zucht'
-    Level INT UNSIGNED DEFAULT NULL CHECK (Level BETWEEN 1 AND 100), -- Das Level wenn dies die Art ist
-    Voraussetzung VARCHAR(100) DEFAULT NULL, -- z.B. 'TM05' oder 'Regen'
+    Art VARCHAR(50) NOT NULL,
+    Level INT UNSIGNED DEFAULT NULL CHECK (Level BETWEEN 1 AND 100),
+    Voraussetzung VARCHAR(100) DEFAULT NULL,
 
     UNIQUE KEY uk_methode_def (Art, Level, Voraussetzung)
 );
 
--- 3. T_Attacken
 CREATE TABLE T_Attacken (
     Attacke_Name VARCHAR(100) NOT NULL PRIMARY KEY,
     Staerke INT UNSIGNED DEFAULT NULL,
@@ -48,14 +41,12 @@ CREATE TABLE T_Attacken (
 );
 CREATE INDEX idx_attacken_typ ON T_Attacken (Typ_Name);
 
--- 4. T_Pokemon
 CREATE TABLE T_Pokemon (
     Pokedex_Nr INT UNSIGNED NOT NULL PRIMARY KEY CHECK (Pokedex_Nr BETWEEN 1 AND 999),
     Pokemon_Name VARCHAR(100) NOT NULL,
     UNIQUE KEY uk_pokemon_name (Pokemon_Name)
 );
 
--- 5. T_Basis_Stats
 CREATE TABLE T_Basis_Stats (
     Pokedex_Nr INT UNSIGNED NOT NULL PRIMARY KEY,
     KP INT UNSIGNED NOT NULL,
@@ -71,7 +62,6 @@ CREATE TABLE T_Basis_Stats (
         ON DELETE CASCADE
 );
 
--- 6. T_Pokemon_Typen
 CREATE TABLE T_Pokemon_Typen (
     Pokedex_Nr INT UNSIGNED NOT NULL,
     Typ_Name VARCHAR(50) NOT NULL,
@@ -88,7 +78,6 @@ CREATE TABLE T_Pokemon_Typen (
 );
 CREATE INDEX idx_poktypen_typ ON T_Pokemon_Typen (Typ_Name);
 
--- 7. T_Evolutions_Methoden
 CREATE TABLE T_Evolutions_Methoden (
     Methode_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Methoden_Name VARCHAR(150) NOT NULL,
@@ -96,7 +85,6 @@ CREATE TABLE T_Evolutions_Methoden (
     UNIQUE KEY uk_evo_method_stein (Methoden_Name, Stein_Name)
 );
 
--- 8. T_Entwicklung
 CREATE TABLE T_Entwicklung (
     Evolutions_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Von_Pokemon_Nr INT UNSIGNED NOT NULL,
@@ -122,7 +110,6 @@ CREATE TABLE T_Entwicklung (
 CREATE INDEX idx_entw_von ON T_Entwicklung (Von_Pokemon_Nr);
 CREATE INDEX idx_entw_zu ON T_Entwicklung (Zu_Pokemon_Nr);
 
--- 9. T_Pokemon_Attacken
 CREATE TABLE T_Pokemon_Attacken (
     Pokemon_Attacken_ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Pokedex_Nr INT UNSIGNED NOT NULL,
