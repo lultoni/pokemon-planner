@@ -14,7 +14,7 @@ SELECT
     lm.Level
 FROM T_Pokemon p
 JOIN T_Pokemon_Attacken pa ON p.Pokedex_Nr = pa.Pokedex_Nr
-JOIN T_Lernmethoden lm ON pa.Lernmethode_ID = lm.Lernmethode_ID -- NEUER JOIN
+JOIN T_Lernmethoden lm ON pa.Lernmethode_ID = lm.Lernmethode_ID
 WHERE pa.Attacke_Name = 'Donnerblitz';
 
 -- ------------------------------------------------------------

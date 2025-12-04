@@ -156,7 +156,7 @@ def normalize_attack_method(raw_method_key, atk_obj):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 JSON_POKEMON = os.path.abspath(os.path.join(BASE_DIR, "..", "information_storage", "pokemon_knowledge_cache.json"))
 JSON_ATTACKS = os.path.abspath(os.path.join(BASE_DIR, "..", "information_storage", "attack_cache.json"))
-OUTPUT_SQL = os.path.abspath(os.path.join(BASE_DIR, "pokemon_export.sql"))
+OUTPUT_SQL = os.path.abspath(os.path.join(BASE_DIR, "dml_pokemon_script.sql"))
 
 GEN1_TYPES = {
     "Normal","Feuer","Wasser","Elektro","Pflanze","Eis",
